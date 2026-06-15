@@ -73,8 +73,15 @@ export default function Goals() {
                     <p className="text-label-md text-on-surface-variant">Target: {formatTarget(goal.targetDate)}</p>
                   </div>
                 </div>
-                <div className="text-right">
+                <div className="flex items-center gap-sm">
                   <span className={`text-headline-lg-mobile ${PROGRESS_TEXT(goal.progress)}`}>{goal.progress}%</span>
+                  <button
+                    onClick={() => deleteGoal(goal)}
+                    aria-label="Delete goal"
+                    className="text-on-surface-variant hover:text-error p-1 -mr-1 rounded-full transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-[20px]">delete</span>
+                  </button>
                 </div>
               </div>
               <div className="space-y-sm">
@@ -145,6 +152,11 @@ export default function Goals() {
 async function updateProgress(goal) {
   const newProgress = Math.min(100, goal.progress + 10);
   await db.goals.update(goal.id, { progress: newProgress });
+}
+
+async function deleteGoal(goal) {
+  if (!confirm(`Delete goal "${goal.title}"? This cannot be undone.`)) return;
+  await db.goals.delete(goal.id);
 }
 
 function AddGoalSheet({ onClose }) {

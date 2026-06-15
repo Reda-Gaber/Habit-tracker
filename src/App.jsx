@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
 import { db, seedIfEmpty, getSetting } from "./db/db";
+import { runNotificationChecks } from "./utils/notifications";
 
 import Onboarding from "./pages/Onboarding";
 import Dashboard from "./pages/Dashboard";
@@ -8,6 +9,7 @@ import Habits from "./pages/Habits";
 import Tasks from "./pages/Tasks";
 import Goals from "./pages/Goals";
 import Learning from "./pages/Learning";
+import CourseDetail from "./pages/CourseDetail";
 import LessonDetail from "./pages/LessonDetail";
 import Stats from "./pages/Stats";
 import AddEditHabit from "./pages/AddEditHabit";
@@ -25,6 +27,13 @@ function App() {
       setOnboarded(!!done);
       setReady(true);
     })();
+  }, []);
+
+  // Periodic notification checks (habit reminders, daily digest, task alerts)
+  useEffect(() => {
+    runNotificationChecks();
+    const interval = setInterval(runNotificationChecks, 60 * 1000);
+    return () => clearInterval(interval);
   }, []);
 
   if (!ready) {
@@ -51,6 +60,7 @@ function App() {
         <Route path="/tasks/:id/edit" element={<AddEditTask />} />
         <Route path="/goals" element={<Goals />} />
         <Route path="/learning" element={<Learning />} />
+        <Route path="/learning/course/:id" element={<CourseDetail />} />
         <Route path="/learning/lesson/:id" element={<LessonDetail />} />
         <Route path="/stats" element={<Stats />} />
         <Route path="/settings/notifications" element={<NotificationSettings />} />

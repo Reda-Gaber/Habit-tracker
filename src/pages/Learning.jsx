@@ -65,6 +65,42 @@ export default function Learning() {
     : null;
   const inProgressCourse = inProgressLesson ? courses.find((c) => c.id === inProgressLesson.courseId) : null;
 
+  const deleteSubject = async (subject) => {
+    if (!confirm(`Delete "${subject.name}" and everything inside it (levels, courses, lessons)? This cannot be undone.`)) return;
+    const subjLevels = await db.levels.where("subjectId").equals(subject.id).toArray();
+    const subjLevelIds = subjLevels.map((l) => l.id);
+    const subjCourses = subjLevelIds.length ? await db.courses.where("levelId").anyOf(subjLevelIds).toArray() : [];
+    const subjCourseIds = subjCourses.map((c) => c.id);
+    if (subjCourseIds.length) {
+      await db.lessons.where("courseId").anyOf(subjCourseIds).delete();
+      await db.courses.where("id").anyOf(subjCourseIds).delete();
+    }
+    if (subjLevelIds.length) {
+      await db.levels.where("id").anyOf(subjLevelIds).delete();
+    }
+    await db.subjects.delete(subject.id);
+    setActiveSubjectId(null);
+    setActiveLevelId(null);
+  };
+
+  const deleteLevel = async (level) => {
+    if (!confirm(`Delete level "${level.name}" and all its courses/lessons? This cannot be undone.`)) return;
+    const levelCourses = await db.courses.where("levelId").equals(level.id).toArray();
+    const levelCourseIds = levelCourses.map((c) => c.id);
+    if (levelCourseIds.length) {
+      await db.lessons.where("courseId").anyOf(levelCourseIds).delete();
+      await db.courses.where("id").anyOf(levelCourseIds).delete();
+    }
+    await db.levels.delete(level.id);
+    setActiveLevelId(null);
+  };
+
+  const deleteCourse = async (course) => {
+    if (!confirm(`Delete course "${course.name}" and all its lessons? This cannot be undone.`)) return;
+    await db.lessons.where("courseId").equals(course.id).delete();
+    await db.courses.delete(course.id);
+  };
+
   if (!activeSubject) {
     return (
       <div className="bg-background min-h-screen pb-24">
@@ -129,9 +165,18 @@ export default function Learning() {
             </div>
           </div>
           <div className="flex-1 text-center md:text-left">
-            <div className="inline-flex items-center gap-xs px-3 py-1 bg-primary-fixed text-on-primary-fixed-variant rounded-full text-label-md mb-2">
-              <span className="material-symbols-outlined text-[14px]">{activeSubject.icon}</span>
-              {activeSubject.name}
+            <div className="flex items-center justify-center md:justify-start gap-sm mb-2">
+              <div className="inline-flex items-center gap-xs px-3 py-1 bg-primary-fixed text-on-primary-fixed-variant rounded-full text-label-md">
+                <span className="material-symbols-outlined text-[14px]">{activeSubject.icon}</span>
+                {activeSubject.name}
+              </div>
+              <button
+                onClick={() => deleteSubject(activeSubject)}
+                aria-label="Delete subject"
+                className="text-on-surface-variant hover:text-error p-1 rounded-full transition-colors"
+              >
+                <span className="material-symbols-outlined text-[18px]">delete</span>
+              </button>
             </div>
             <h2 className="text-headline-lg-mobile text-on-surface mb-1">{activeSubject.name}</h2>
             <p className="text-on-surface-variant text-body-sm">
@@ -141,19 +186,36 @@ export default function Learning() {
         </section>
 
         <nav className="flex items-center gap-sm overflow-x-auto no-scrollbar -mx-container_margin_mobile px-container_margin_mobile">
-          {levels.map((level) => (
-            <button
-              key={level.id}
-              onClick={() => setActiveLevelId(level.id)}
-              className={`px-lg py-2 rounded-full text-label-md transition-all duration-200 whitespace-nowrap ${
-                level.id === (activeLevelId ?? levels[0]?.id)
-                  ? "bg-primary-container text-on-primary-container shadow-sm"
-                  : "bg-surface-container text-on-surface-variant hover:bg-surface-container-high"
-              }`}
-            >
-              {level.name}
-            </button>
-          ))}
+          {levels.map((level) => {
+            const isActive = level.id === (activeLevelId ?? levels[0]?.id);
+            return (
+              <div key={level.id} className="flex items-center">
+                <button
+                  onClick={() => setActiveLevelId(level.id)}
+                  className={`px-lg py-2 rounded-full text-label-md transition-all duration-200 whitespace-nowrap ${
+                    isActive
+                      ? "bg-primary-container text-on-primary-container shadow-sm rounded-r-none"
+                      : "bg-surface-container text-on-surface-variant hover:bg-surface-container-high"
+                  }`}
+                >
+                  {level.name}
+                </button>
+                {isActive && (
+                  <button
+                    onClick={() => deleteLevel(level)}
+                    aria-label="Delete level"
+                    className="px-1.5 py-1 rounded-full rounded-l-none bg-primary-container text-on-primary-container hover:text-error transition-colors"
+                    >
+                    <span 
+                      className="material-symbols-outlined text-[14px]"
+                      style={{ background: "#ad2929", borderRadius: "50%", padding: "3px" }}
+                      >
+                        close</span>
+                  </button>
+                )}
+              </div>
+            );
+          })}
         </nav>
 
         <section className="flex flex-col gap-md">
@@ -173,10 +235,7 @@ export default function Learning() {
             return (
               <div
                 key={course.id}
-                onClick={() => {
-                  const firstLesson = lessons[0];
-                  if (firstLesson) navigate(`/learning/lesson/${firstLesson.id}`);
-                }}
+                onClick={() => navigate(`/learning/course/${course.id}`)}
                 className="bg-surface-container-lowest rounded-xl p-md border border-surface-variant/30 flex items-start gap-md hover:shadow-md transition-shadow duration-300 cursor-pointer"
               >
                 <div className="w-12 h-12 rounded-lg bg-secondary-fixed flex items-center justify-center text-on-secondary-fixed">
@@ -195,6 +254,16 @@ export default function Learning() {
                   </div>
                 </div>
                 <span className="material-symbols-outlined text-on-surface-variant p-1">chevron_right</span>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    deleteCourse(course);
+                  }}
+                  aria-label="Delete course"
+                  className="text-on-surface-variant hover:text-error p-1 -ml-1 rounded-full transition-colors shrink-0"
+                >
+                  <span className="material-symbols-outlined text-[18px]">delete</span>
+                </button>
               </div>
             );
           })}

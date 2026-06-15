@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useLiveQuery } from "dexie-react-hooks";
-import { db } from "../db/db";
+import { db, getSetting, setSetting } from "../db/db";
 import BottomNav from "../components/BottomNav";
 
 const STATUS_OPTIONS = [
@@ -9,6 +9,8 @@ const STATUS_OPTIONS = [
   { key: "in_progress", label: "In Progress", icon: "pending", iconActive: "pending" },
   { key: "completed", label: "Completed", icon: "check_circle", iconActive: "check_circle" },
 ];
+
+const DURATION_PRESETS = [15, 25, 45, 60];
 
 export default function LessonDetail() {
   const navigate = useNavigate();
@@ -26,17 +28,70 @@ export default function LessonDetail() {
   ) || [];
 
   const [notes, setNotes] = useState("");
+  const [durationMin, setDurationMin] = useState(25);
   const [timeLeft, setTimeLeft] = useState(25 * 60);
   const [isRunning, setIsRunning] = useState(false);
+  const [showCustomDuration, setShowCustomDuration] = useState(false);
+  const [customDuration, setCustomDuration] = useState("");
   const intervalRef = useRef(null);
+  const timerKey = `timer_lesson_${lessonId}`;
 
   useEffect(() => {
     if (lesson) setNotes(lesson.notes || "");
   }, [lesson?.id]);
 
+  // On mount: restore any in-flight timer from storage (survives reload/close)
   useEffect(() => {
+    (async () => {
+      const saved = await getSetting(timerKey, null);
+      if (saved && saved.endTime) {
+        const remainingMs = saved.endTime - Date.now();
+        setDurationMin(saved.durationMin);
+        if (remainingMs > 0) {
+          setTimeLeft(Math.ceil(remainingMs / 1000));
+          setIsRunning(true);
+        } else {
+          // Timer finished while app was closed
+          setTimeLeft(saved.durationMin * 60);
+          setIsRunning(false);
+          await setSetting(timerKey, null);
+          await logSessionDuration(saved.durationMin);
+        }
+      } else if (saved && typeof saved.remainingSec === "number") {
+        // Paused state
+        setDurationMin(saved.durationMin);
+        setTimeLeft(saved.remainingSec);
+      } else if (saved && saved.durationMin) {
+        setDurationMin(saved.durationMin);
+        setTimeLeft(saved.durationMin * 60);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lessonId]);
+
+  // Tick loop while running
+  useEffect(() => {
+    if (!isRunning) {
+      clearInterval(intervalRef.current);
+      return;
+    }
+    intervalRef.current = setInterval(async () => {
+      const saved = await getSetting(timerKey, null);
+      if (!saved || !saved.endTime) return;
+      const remainingMs = saved.endTime - Date.now();
+      if (remainingMs <= 0) {
+        clearInterval(intervalRef.current);
+        setIsRunning(false);
+        setTimeLeft(durationMin * 60);
+        await setSetting(timerKey, null);
+        await logSessionDuration(saved.durationMin);
+      } else {
+        setTimeLeft(Math.ceil(remainingMs / 1000));
+      }
+    }, 1000);
     return () => clearInterval(intervalRef.current);
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isRunning]);
 
   if (!lesson || !course) {
     return (
@@ -64,39 +119,50 @@ export default function LessonDetail() {
     await db.lessons.update(lesson.id, { notes: val });
   };
 
-  const toggleTimer = () => {
+  const toggleTimer = async () => {
     if (isRunning) {
+      // Pause: persist remaining duration as a fresh "not started" state
       clearInterval(intervalRef.current);
       setIsRunning(false);
+      await setSetting(timerKey, { durationMin, remainingSec: timeLeft, endTime: null });
     } else {
+      const endTime = Date.now() + timeLeft * 1000;
+      await setSetting(timerKey, { durationMin, endTime });
       setIsRunning(true);
-      intervalRef.current = setInterval(() => {
-        setTimeLeft((prev) => {
-          if (prev <= 1) {
-            clearInterval(intervalRef.current);
-            setIsRunning(false);
-            logSession();
-            return 25 * 60;
-          }
-          return prev - 1;
-        });
-      }, 1000);
     }
   };
 
-  const resetTimer = () => {
+  const resetTimer = async () => {
     clearInterval(intervalRef.current);
     setIsRunning(false);
-    setTimeLeft(25 * 60);
+    setTimeLeft(durationMin * 60);
+    await setSetting(timerKey, null);
   };
 
-  const logSession = async () => {
+  const selectDuration = async (mins) => {
+    if (isRunning) return;
+    setDurationMin(mins);
+    setTimeLeft(mins * 60);
+    setShowCustomDuration(false);
+    await setSetting(timerKey, { durationMin: mins, endTime: null });
+  };
+
+  const applyCustomDuration = () => {
+    const mins = parseInt(customDuration, 10);
+    if (!mins || mins <= 0) return;
+    const capped = Math.min(mins, 240);
+    selectDuration(capped);
+    setCustomDuration("");
+  };
+
+  const logSessionDuration = async (mins) => {
     await db.studySessions.add({
       lessonId: lesson.id,
-      duration: 25,
+      duration: mins,
       date: new Date().toISOString().split("T")[0],
     });
-    if (lesson.status === "not_started") {
+    const current = await db.lessons.get(lesson.id);
+    if (current && current.status === "not_started") {
       await db.lessons.update(lesson.id, { status: "in_progress" });
     }
   };
@@ -130,7 +196,7 @@ export default function LessonDetail() {
             <div className="flex items-center gap-4 text-white/80">
               <div className="flex items-center gap-1">
                 <span className="material-symbols-outlined text-[18px]">schedule</span>
-                <span className="text-label-md">25 mins</span>
+                <span className="text-label-md">{durationMin} mins</span>
               </div>
             </div>
           </div>
@@ -200,7 +266,57 @@ export default function LessonDetail() {
               <h2 className="text-headline-lg-mobile text-on-surface">Deep Work Session</h2>
               <p className="text-on-surface-variant text-body-lg">Focus on {lesson.name}</p>
             </div>
-            <div className="text-display-lg mb-xl text-primary tracking-tighter">{display}</div>
+            <div className="text-display-lg mb-md text-primary tracking-tighter">{display}</div>
+
+            {/* Duration picker */}
+            <div className="w-full max-w-xs mb-lg">
+              <div className="flex gap-sm justify-center mb-sm">
+                {DURATION_PRESETS.map((mins) => (
+                  <button
+                    key={mins}
+                    onClick={() => selectDuration(mins)}
+                    disabled={isRunning}
+                    className={`px-md py-1.5 rounded-full text-label-md transition-all ${
+                      durationMin === mins
+                        ? "bg-primary text-on-primary"
+                        : "bg-surface-container text-on-surface-variant hover:bg-surface-container-high"
+                    } ${isRunning ? "opacity-50 cursor-not-allowed" : ""}`}
+                  >
+                    {mins}m
+                  </button>
+                ))}
+                <button
+                  onClick={() => !isRunning && setShowCustomDuration((v) => !v)}
+                  disabled={isRunning}
+                  className={`px-md py-1.5 rounded-full text-label-md transition-all ${
+                    showCustomDuration || !DURATION_PRESETS.includes(durationMin)
+                      ? "bg-primary text-on-primary"
+                      : "bg-surface-container text-on-surface-variant hover:bg-surface-container-high"
+                  } ${isRunning ? "opacity-50 cursor-not-allowed" : ""}`}
+                >
+                  {!DURATION_PRESETS.includes(durationMin) ? `${durationMin}m` : "Custom"}
+                </button>
+              </div>
+              {showCustomDuration && (
+                <div className="flex gap-sm">
+                  <input
+                    type="number"
+                    min="1"
+                    max="240"
+                    value={customDuration}
+                    onChange={(e) => setCustomDuration(e.target.value)}
+                    placeholder="Minutes"
+                    className="flex-1 px-md py-2 bg-surface-container-low border border-outline-variant rounded-xl text-body-sm outline-none focus:ring-2 focus:ring-primary"
+                  />
+                  <button
+                    onClick={applyCustomDuration}
+                    className="px-lg py-2 bg-primary text-on-primary rounded-xl text-label-md"
+                  >
+                    Set
+                  </button>
+                </div>
+              )}
+            </div>
             <div className="flex flex-col w-full max-w-xs gap-md">
               <button
                 onClick={toggleTimer}

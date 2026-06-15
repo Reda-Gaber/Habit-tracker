@@ -83,6 +83,49 @@ export default function Dashboard() {
     [inProgressLesson]
   );
 
+  // Goals overview
+  const goals = useLiveQuery(() => db.goals.toArray(), []) || [];
+  const avgGoalProgress = goals.length
+    ? Math.round(goals.reduce((sum, g) => sum + g.progress, 0) / goals.length)
+    : 0;
+
+  // Today's tasks (for full list on dashboard)
+  const todaysTaskList = tasks
+    .filter((t) => t.dueDate === todayKey || (t.dueDate < todayKey && !t.completed))
+    .sort((a, b) => Number(a.completed) - Number(b.completed));
+
+  // Learning breakdown: Subjects -> Levels -> Courses with completed/total lessons
+  const subjects = useLiveQuery(() => db.subjects.toArray(), []) || [];
+  const allLevels = useLiveQuery(() => db.levels.toArray(), []) || [];
+  const allCourses = useLiveQuery(() => db.courses.toArray(), []) || [];
+  const allLessons = useLiveQuery(() => db.lessons.toArray(), []) || [];
+  const studySessions = useLiveQuery(() => db.studySessions.toArray(), []) || [];
+
+  const totalFocusMinutes = studySessions.reduce((sum, s) => sum + (s.duration || 0), 0);
+  const totalFocusHours = (totalFocusMinutes / 60).toFixed(1);
+
+  const learningBreakdown = subjects.map((subject) => {
+    const subjectLevels = allLevels.filter((l) => l.subjectId === subject.id);
+    const levelsWithCourses = subjectLevels.map((level) => {
+      const levelCourses = allCourses.filter((c) => c.levelId === level.id);
+      const coursesWithLessons = levelCourses.map((course) => {
+        const courseLessons = allLessons.filter((les) => les.courseId === course.id);
+        const completed = courseLessons.filter((les) => les.status === "completed").length;
+        return { course, total: courseLessons.length, completed };
+      });
+      const levelTotal = coursesWithLessons.reduce((sum, c) => sum + c.total, 0);
+      const levelCompleted = coursesWithLessons.reduce((sum, c) => sum + c.completed, 0);
+      return { level, courses: coursesWithLessons, total: levelTotal, completed: levelCompleted };
+    });
+    const subjectTotal = levelsWithCourses.reduce((sum, l) => sum + l.total, 0);
+    const subjectCompleted = levelsWithCourses.reduce((sum, l) => sum + l.completed, 0);
+    return { subject, levels: levelsWithCourses, total: subjectTotal, completed: subjectCompleted };
+  });
+
+  const totalLessonsAll = allLessons.length;
+  const completedLessonsAll = allLessons.filter((l) => l.status === "completed").length;
+
+
   const todayLabel = today.toLocaleDateString("en-US", {
     weekday: "long",
     month: "short",
@@ -134,7 +177,25 @@ export default function Dashboard() {
           </div>
         </section>
 
-        {/* Weekly Overview */}
+        {/* Overview Stats */}
+        <section className="grid grid-cols-3 gap-sm">
+          <div onClick={() => navigate("/goals")} className="bento-card p-md flex flex-col items-center gap-1 cursor-pointer">
+            <span className="material-symbols-outlined text-secondary icon-filled">flag</span>
+            <span className="text-title-md text-on-surface">{avgGoalProgress}%</span>
+            <span className="text-label-md text-on-surface-variant text-center">Goals avg.</span>
+          </div>
+          <div onClick={() => navigate("/learning")} className="bento-card p-md flex flex-col items-center gap-1 cursor-pointer">
+            <span className="material-symbols-outlined text-primary icon-filled">school</span>
+            <span className="text-title-md text-on-surface">{completedLessonsAll}/{totalLessonsAll}</span>
+            <span className="text-label-md text-on-surface-variant text-center">Lessons done</span>
+          </div>
+          <div onClick={() => navigate("/stats")} className="bento-card p-md flex flex-col items-center gap-1 cursor-pointer">
+            <span className="material-symbols-outlined text-tertiary icon-filled">timer</span>
+            <span className="text-title-md text-on-surface">{totalFocusHours}h</span>
+            <span className="text-label-md text-on-surface-variant text-center">Focus time</span>
+          </div>
+        </section>
+
         <section className="space-y-md">
           <h3 className="text-title-md text-on-surface">Weekly Overview</h3>
           <div className="bento-card p-lg space-y-lg">
@@ -186,7 +247,128 @@ export default function Dashboard() {
           </div>
         </section>
 
-        {/* Continue Learning */}
+        {/* Today's Tasks */}
+        <section className="space-y-md">
+          <div className="flex justify-between items-center">
+            <h3 className="text-title-md text-on-surface">Today's Tasks</h3>
+            <button onClick={() => navigate("/tasks")} className="text-label-md text-primary">
+              View all
+            </button>
+          </div>
+          <div className="bento-card p-md space-y-sm">
+            {todaysTaskList.length === 0 && (
+              <p className="text-body-sm text-on-surface-variant text-center py-md">
+                Nothing due today. Enjoy the calm!
+              </p>
+            )}
+            {todaysTaskList.map((task) => (
+              <div
+                key={task.id}
+                onClick={() => navigate(`/tasks/${task.id}/edit`)}
+                className="flex items-center gap-md p-sm rounded-lg hover:bg-surface-container-low transition-colors cursor-pointer"
+              >
+                <span className={`material-symbols-outlined text-[20px] ${task.completed ? "text-tertiary icon-filled" : "text-outline"}`}>
+                  {task.completed ? "check_circle" : "radio_button_unchecked"}
+                </span>
+                <span className={`flex-1 text-body-sm ${task.completed ? "line-through text-on-surface-variant" : "text-on-surface"}`}>
+                  {task.title}
+                </span>
+                {task.dueDate < todayKey && !task.completed && (
+                  <span className="text-label-md text-error">Overdue</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Goals Progress */}
+        <section className="space-y-md">
+          <div className="flex justify-between items-center">
+            <h3 className="text-title-md text-on-surface">Goals Progress</h3>
+            <button onClick={() => navigate("/goals")} className="text-label-md text-primary">
+              View all
+            </button>
+          </div>
+          <div className="bento-card p-md space-y-md">
+            {goals.length === 0 && (
+              <p className="text-body-sm text-on-surface-variant text-center py-md">
+                No goals yet — add one to start planning ahead.
+              </p>
+            )}
+            {goals.map((goal) => (
+              <div key={goal.id}>
+                <div className="flex justify-between items-center mb-1">
+                  <span className="text-body-sm text-on-surface truncate pr-md">{goal.title}</span>
+                  <span className="text-label-md text-primary shrink-0">{goal.progress}%</span>
+                </div>
+                <div className="w-full h-2 bg-surface-container rounded-full overflow-hidden">
+                  <div className="h-full bg-primary rounded-full" style={{ width: `${goal.progress}%` }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Learning Progress Breakdown */}
+        <section className="space-y-md">
+          <div className="flex justify-between items-center">
+            <h3 className="text-title-md text-on-surface">Learning Progress</h3>
+            <button onClick={() => navigate("/learning")} className="text-label-md text-primary">
+              Open
+            </button>
+          </div>
+          <div className="space-y-md">
+            {learningBreakdown.length === 0 && (
+              <div className="bento-card p-md">
+                <p className="text-body-sm text-on-surface-variant text-center py-md">
+                  No subjects yet — add one from the Learning tab.
+                </p>
+              </div>
+            )}
+            {learningBreakdown.map(({ subject, levels, total, completed }) => (
+              <div key={subject.id} className="bento-card p-md">
+                <div className="flex items-center justify-between mb-sm">
+                  <div className="flex items-center gap-sm">
+                    <span className="material-symbols-outlined text-primary text-[20px]">{subject.icon}</span>
+                    <span className="text-body-lg font-semibold text-on-surface">{subject.name}</span>
+                  </div>
+                  <span className="text-label-md text-on-surface-variant">
+                    {completed}/{total} lessons
+                  </span>
+                </div>
+                <div className="space-y-sm pl-lg">
+                  {levels.map(({ level, courses, total: lTotal, completed: lCompleted }) => (
+                    <div key={level.id}>
+                      <div className="flex items-center justify-between">
+                        <span className="text-label-md text-on-surface-variant uppercase tracking-wider">{level.name}</span>
+                        <span className="text-label-md text-on-surface-variant">{lCompleted}/{lTotal}</span>
+                      </div>
+                      {courses.map(({ course, total: cTotal, completed: cCompleted }) => {
+                        const pct = cTotal ? Math.round((cCompleted / cTotal) * 100) : 0;
+                        return (
+                          <div
+                            key={course.id}
+                            onClick={() => navigate(`/learning/course/${course.id}`)}
+                            className="flex items-center gap-sm py-1 cursor-pointer"
+                          >
+                            <span className="text-body-sm text-on-surface flex-1 truncate">{course.name}</span>
+                            <div className="w-16 h-1.5 bg-surface-container rounded-full overflow-hidden shrink-0">
+                              <div className="h-full bg-primary rounded-full" style={{ width: `${pct}%` }} />
+                            </div>
+                            <span className="text-label-md text-on-surface-variant w-10 text-right shrink-0">
+                              {cCompleted}/{cTotal}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
         <section className="space-y-md">
           <h3 className="text-title-md text-on-surface">Continue Learning</h3>
           <div

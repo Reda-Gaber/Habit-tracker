@@ -13,6 +13,23 @@ function todayStr() {
   return new Date().toISOString().split("T")[0];
 }
 
+function Toggle({ checked, onChange }) {
+  return (
+    <button
+      onClick={() => onChange(!checked)}
+      className={`relative inline-flex items-center w-11 h-6 rounded-full transition-colors duration-200 ${
+        checked ? "bg-primary" : "bg-surface-variant"
+      }`}
+    >
+      <span
+        className={`absolute top-[2px] left-[2px] bg-white w-5 h-5 rounded-full shadow-sm transition-transform duration-200 ${
+          checked ? "translate-x-5" : "translate-x-0"
+        }`}
+      />
+    </button>
+  );
+}
+
 export default function AddEditTask() {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -20,6 +37,8 @@ export default function AddEditTask() {
 
   const [title, setTitle] = useState("");
   const [dueDate, setDueDate] = useState(todayStr());
+  const [hasDueTime, setHasDueTime] = useState(false);
+  const [dueTime, setDueTime] = useState("09:00");
   const [priority, setPriority] = useState("medium");
   const [category, setCategory] = useState("Personal");
 
@@ -29,6 +48,8 @@ export default function AddEditTask() {
         if (t) {
           setTitle(t.title);
           setDueDate(t.dueDate);
+          setHasDueTime(!!t.hasDueTime);
+          setDueTime(t.dueTime || "09:00");
           setPriority(t.priority);
           setCategory(t.category);
         }
@@ -38,7 +59,14 @@ export default function AddEditTask() {
 
   const save = async () => {
     if (!title.trim()) return;
-    const data = { title: title.trim(), dueDate, priority, category };
+    const data = {
+      title: title.trim(),
+      dueDate,
+      hasDueTime,
+      dueTime: hasDueTime ? dueTime : null,
+      priority,
+      category,
+    };
     if (isEdit) {
       await db.tasks.update(Number(id), data);
     } else {
@@ -87,6 +115,30 @@ export default function AddEditTask() {
               className="bg-transparent border-none p-0 focus:ring-0 text-body-lg w-full outline-none"
             />
           </div>
+        </section>
+
+        <section className="space-y-sm">
+          <div className="flex items-center justify-between px-lg py-4 bg-white border border-outline-variant rounded-xl">
+            <div className="flex items-center gap-md">
+              <span className="material-symbols-outlined text-on-surface-variant">schedule</span>
+              <div>
+                <p className="text-body-lg text-on-surface">Set a specific time</p>
+                <p className="text-label-md text-on-surface-variant">Get reminded at an exact time</p>
+              </div>
+            </div>
+            <Toggle checked={hasDueTime} onChange={setHasDueTime} />
+          </div>
+          {hasDueTime && (
+            <div className="flex items-center gap-md px-lg py-4 bg-white border border-outline-variant rounded-xl">
+              <span className="material-symbols-outlined text-on-surface-variant">access_time</span>
+              <input
+                type="time"
+                value={dueTime}
+                onChange={(e) => setDueTime(e.target.value)}
+                className="bg-transparent border-none p-0 focus:ring-0 text-body-lg w-full outline-none"
+              />
+            </div>
+          )}
         </section>
 
         <section className="space-y-sm">

@@ -34,6 +34,15 @@ function formatDueDate(dateStr) {
   return date.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
 }
 
+function formatTime(t) {
+  if (!t) return "";
+  const [h, m] = t.split(":");
+  const hour = parseInt(h, 10);
+  const period = hour >= 12 ? "PM" : "AM";
+  const displayHour = hour % 12 === 0 ? 12 : hour % 12;
+  return `${displayHour}:${m} ${period}`;
+}
+
 export default function Tasks() {
   const navigate = useNavigate();
   const tasks = useLiveQuery(() => db.tasks.toArray(), []) || [];
@@ -100,7 +109,10 @@ export default function Tasks() {
                 </div>
                 <div className="flex-grow">
                   <h3 className="text-body-lg text-on-surface">{task.title}</h3>
-                  <p className="text-label-md text-on-surface-variant">{formatDueDate(task.dueDate)}</p>
+                  <p className="text-label-md text-on-surface-variant">
+                    {formatDueDate(task.dueDate)}
+                    {task.hasDueTime && task.dueTime && ` • ${formatTime(task.dueTime)}`}
+                  </p>
                 </div>
                 <span className="material-symbols-outlined text-on-surface-variant opacity-40">
                   chevron_right
@@ -147,6 +159,15 @@ function TaskCard({ task, onToggle, onClick }) {
                 <div className="w-1 h-1 rounded-full bg-outline-variant mx-1" />
                 <span className={`px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wider font-bold ${PRIORITY_STYLES[task.priority]}`}>
                   {task.priority}
+                </span>
+              </>
+            )}
+            {task.hasDueTime && task.dueTime && (
+              <>
+                <div className="w-1 h-1 rounded-full bg-outline-variant mx-1" />
+                <span className="text-label-md text-on-surface-variant flex items-center gap-1">
+                  <span className="material-symbols-outlined text-[14px]">schedule</span>
+                  {formatTime(task.dueTime)}
                 </span>
               </>
             )}
