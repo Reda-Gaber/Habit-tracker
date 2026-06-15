@@ -2,6 +2,112 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --color-primary-fixed: #dee0ff;
+  --color-on-primary: #ffffff;
+  --color-on-tertiary-container: #83e881;
+  --color-on-secondary-fixed: #3a0a00;
+  --color-on-background: #191c1e;
+  --color-on-secondary-container: #631800;
+  --color-surface-tint: #4355b9;
+  --color-outline-variant: #c5c5d4;
+  --color-inverse-surface: #2d3133;
+  --color-on-secondary-fixed-variant: #852300;
+  --color-tertiary-container: #00691b;
+  --color-error-container: #ffdad6;
+  --color-surface-container-lowest: #ffffff;
+  --color-primary: #24389c;
+  --color-on-surface: #191c1e;
+  --color-on-error: #ffffff;
+  --color-tertiary-fixed: #94f990;
+  --color-on-tertiary: #ffffff;
+  --color-surface-variant: #e0e3e6;
+  --color-inverse-on-surface: #eff1f4;
+  --color-on-surface-variant: #454652;
+  --color-background: #f7f9fc;
+  --color-surface-container: #eceef1;
+  --color-surface-container-low: #f2f4f7;
+  --color-on-tertiary-fixed: #002204;
+  --color-surface-dim: #d8dadd;
+  --color-surface-container-high: #e6e8eb;
+  --color-primary-fixed-dim: #bac3ff;
+  --color-secondary-fixed: #ffdbd0;
+  --color-on-primary-container: #cacfff;
+  --color-surface-container-highest: #e0e3e6;
+  --color-inverse-primary: #bac3ff;
+  --color-secondary: #ac3509;
+  --color-tertiary: #004e11;
+  --color-surface: #f7f9fc;
+  --color-secondary-fixed-dim: #ffb59f;
+  --color-on-tertiary-fixed-variant: #005313;
+  --color-on-primary-fixed-variant: #293ca0;
+  --color-secondary-container: #fe6f42;
+  --color-primary-container: #3f51b5;
+  --color-on-error-container: #93000a;
+  --color-outline: #757684;
+  --color-on-primary-fixed: #00105c;
+  --color-surface-bright: #f7f9fc;
+  --color-tertiary-fixed-dim: #78dc77;
+  --color-on-secondary: #ffffff;
+  --color-error: #ba1a1a;
+
+  --bento-bg: #ffffff;
+  --bento-border: #e0e3e6;
+}
+
+.dark {
+  --color-primary-fixed: #2a3a8c;
+  --color-on-primary: #ffffff;
+  --color-on-tertiary-container: #b6f5b4;
+  --color-on-secondary-fixed: #ffe0d8;
+  --color-on-background: #e3e2e6;
+  --color-on-secondary-container: #ffccbc;
+  --color-surface-tint: #bac3ff;
+  --color-outline-variant: #45464f;
+  --color-inverse-surface: #e3e2e6;
+  --color-on-secondary-fixed-variant: #ffb59f;
+  --color-tertiary-container: #1f5c33;
+  --color-error-container: #93000a;
+  --color-surface-container-lowest: #0f1115;
+  --color-primary: #bac3ff;
+  --color-on-surface: #e3e2e6;
+  --color-on-error: #690005;
+  --color-tertiary-fixed: #2f7d3f;
+  --color-on-tertiary: #00390a;
+  --color-surface-variant: #45464f;
+  --color-inverse-on-surface: #2f3033;
+  --color-on-surface-variant: #c6c5d0;
+  --color-background: #121317;
+  --color-surface-container: #1e2024;
+  --color-surface-container-low: #191b1f;
+  --color-on-tertiary-fixed: #b6f5b4;
+  --color-surface-dim: #121317;
+  --color-surface-container-high: #282a2e;
+  --color-primary-fixed-dim: #6b78d6;
+  --color-secondary-fixed: #7a2c14;
+  --color-on-primary-container: #dde0ff;
+  --color-surface-container-highest: #333539;
+  --color-inverse-primary: #4355b9;
+  --color-secondary: #ffb59f;
+  --color-tertiary: #94f990;
+  --color-surface: #121317;
+  --color-secondary-fixed-dim: #ac3509;
+  --color-on-tertiary-fixed-variant: #b6f5b4;
+  --color-on-primary-fixed-variant: #dde0ff;
+  --color-secondary-container: #fe6f42;
+  --color-primary-container: #3f51b5;
+  --color-on-error-container: #ffdad6;
+  --color-outline: #90909a;
+  --color-on-primary-fixed: #dde0ff;
+  --color-surface-bright: #38393d;
+  --color-tertiary-fixed-dim: #2f7d3f;
+  --color-on-secondary: #690000;
+  --color-error: #ffb4ab;
+
+  --bento-bg: #1a1c20;
+  --bento-border: #2c2e33;
+}
+
 * {
   -webkit-tap-highlight-color: transparent;
 }
@@ -12,10 +118,19 @@ body,
   height: 100%;
 }
 
+html {
+  color-scheme: light;
+}
+html.dark {
+  color-scheme: dark;
+}
+
 body {
   font-family: "Inter", sans-serif;
-  background-color: #f7f9fc;
+  background-color: var(--color-background);
+  color: var(--color-on-background);
   overscroll-behavior-y: none;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .material-symbols-outlined {
@@ -34,11 +149,11 @@ body {
 }
 
 .bento-card {
-  background-color: white;
+  background-color: var(--bento-bg);
   border-radius: 16px;
-  border: 1px solid #e0e3e6;
+  border: 1px solid var(--bento-border);
   box-shadow: 0 4px 20px rgba(67, 85, 185, 0.04);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .bento-card:active {

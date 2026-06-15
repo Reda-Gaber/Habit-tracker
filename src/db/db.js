@@ -115,3 +115,49 @@ export async function getSetting(key, fallback = null) {
 export async function setSetting(key, value) {
   await db.settings.put({ key, value });
 }
+
+// ---------- Backup: export / import all data as JSON ----------
+const DATA_TABLES = [
+  "habits",
+  "habitLogs",
+  "tasks",
+  "goals",
+  "subjects",
+  "levels",
+  "courses",
+  "lessons",
+  "studySessions",
+  "settings",
+];
+
+export async function exportAllData() {
+  const data = {};
+  for (const table of DATA_TABLES) {
+    data[table] = await db[table].toArray();
+  }
+  return {
+    app: "Ritual - Habit & Learning Tracker",
+    exportedAt: new Date().toISOString(),
+    version: 1,
+    data,
+  };
+}
+
+// Replaces ALL local data with the contents of the given backup object.
+// Throws if the backup looks invalid.
+export async function importAllData(backup) {
+  if (!backup || typeof backup !== "object" || !backup.data) {
+    throw new Error("Invalid backup file: missing 'data' field.");
+  }
+  const { data } = backup;
+
+  await db.transaction("rw", DATA_TABLES.map((t) => db[t]), async () => {
+    for (const table of DATA_TABLES) {
+      if (!Array.isArray(data[table])) continue;
+      await db[table].clear();
+      if (data[table].length > 0) {
+        await db[table].bulkAdd(data[table]);
+      }
+    }
+  });
+}

@@ -100,13 +100,13 @@ export default function AddEditTask() {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="What needs to be done?"
-            className="w-full px-lg py-4 bg-white border border-outline-variant rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all text-body-lg placeholder:text-outline outline-none"
+            className="w-full px-lg py-4 bg-surface-container-lowest border border-outline-variant rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all text-body-lg placeholder:text-outline outline-none"
           />
         </section>
 
         <section className="space-y-sm">
           <label className="text-label-md text-on-surface-variant uppercase tracking-wider">Due Date</label>
-          <div className="flex items-center gap-md px-lg py-4 bg-white border border-outline-variant rounded-xl">
+          <div className="flex items-center gap-md px-lg py-4 bg-surface-container-lowest border border-outline-variant rounded-xl">
             <span className="material-symbols-outlined text-on-surface-variant">event</span>
             <input
               type="date"
@@ -118,7 +118,7 @@ export default function AddEditTask() {
         </section>
 
         <section className="space-y-sm">
-          <div className="flex items-center justify-between px-lg py-4 bg-white border border-outline-variant rounded-xl">
+          <div className="flex items-center justify-between px-lg py-4 bg-surface-container-lowest border border-outline-variant rounded-xl">
             <div className="flex items-center gap-md">
               <span className="material-symbols-outlined text-on-surface-variant">schedule</span>
               <div>
@@ -129,7 +129,7 @@ export default function AddEditTask() {
             <Toggle checked={hasDueTime} onChange={setHasDueTime} />
           </div>
           {hasDueTime && (
-            <div className="flex items-center gap-md px-lg py-4 bg-white border border-outline-variant rounded-xl">
+            <div className="flex items-center gap-md px-lg py-4 bg-surface-container-lowest border border-outline-variant rounded-xl">
               <span className="material-symbols-outlined text-on-surface-variant">access_time</span>
               <input
                 type="time"
@@ -149,7 +149,7 @@ export default function AddEditTask() {
                 key={p.key}
                 onClick={() => setPriority(p.key)}
                 className={`flex-1 py-3 rounded-xl text-label-md font-bold uppercase tracking-wider transition-all ${
-                  priority === p.key ? p.classes + " ring-2 ring-primary" : "bg-white border border-outline-variant text-on-surface-variant"
+                  priority === p.key ? p.classes + " ring-2 ring-primary" : "bg-surface-container-lowest border border-outline-variant text-on-surface-variant"
                 }`}
               >
                 {p.label}
@@ -166,7 +166,7 @@ export default function AddEditTask() {
                 key={c}
                 onClick={() => setCategory(c)}
                 className={`px-lg py-2 rounded-full text-label-md transition-all ${
-                  category === c ? "bg-primary-container text-on-primary-container" : "bg-white border border-outline-variant text-on-surface-variant"
+                  category === c ? "bg-primary-container text-on-primary-container" : "bg-surface-container-lowest border border-outline-variant text-on-surface-variant"
                 }`}
               >
                 {c}

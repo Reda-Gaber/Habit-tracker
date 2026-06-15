@@ -102,7 +102,25 @@ export default function Dashboard() {
   const studySessions = useLiveQuery(() => db.studySessions.toArray(), []) || [];
 
   const totalFocusMinutes = studySessions.reduce((sum, s) => sum + (s.duration || 0), 0);
-  const totalFocusHours = (totalFocusMinutes / 60).toFixed(1);
+
+  // Weekly focus time comparison
+  const lastWeekStart = new Date(weekStart);
+  lastWeekStart.setDate(lastWeekStart.getDate() - 7);
+  const thisWeekFocusMin = studySessions
+    .filter((s) => new Date(s.date) >= weekStart)
+    .reduce((sum, s) => sum + (s.duration || 0), 0);
+  const lastWeekFocusMin = studySessions
+    .filter((s) => new Date(s.date) >= lastWeekStart && new Date(s.date) < weekStart)
+    .reduce((sum, s) => sum + (s.duration || 0), 0);
+
+  let focusChange = null;
+  if (lastWeekFocusMin > 0) {
+    focusChange = { pct: Math.round(((thisWeekFocusMin - lastWeekFocusMin) / lastWeekFocusMin) * 100) };
+    focusChange.up = focusChange.pct >= 0;
+  } else if (thisWeekFocusMin > 0) {
+    focusChange = { pct: 100, up: true };
+  }
+  const thisWeekFocusHours = (thisWeekFocusMin / 60).toFixed(1);
 
   const learningBreakdown = subjects.map((subject) => {
     const subjectLevels = allLevels.filter((l) => l.subjectId === subject.id);
@@ -189,10 +207,18 @@ export default function Dashboard() {
             <span className="text-title-md text-on-surface">{completedLessonsAll}/{totalLessonsAll}</span>
             <span className="text-label-md text-on-surface-variant text-center">Lessons done</span>
           </div>
-          <div onClick={() => navigate("/stats")} className="bento-card p-md flex flex-col items-center gap-1 cursor-pointer">
+          <div onClick={() => navigate("/stats/focus-time")} className="bento-card p-md flex flex-col items-center gap-1 cursor-pointer">
             <span className="material-symbols-outlined text-tertiary icon-filled">timer</span>
-            <span className="text-title-md text-on-surface">{totalFocusHours}h</span>
-            <span className="text-label-md text-on-surface-variant text-center">Focus time</span>
+            <span className="text-title-md text-on-surface">{thisWeekFocusHours}h</span>
+            <span className="text-label-md text-on-surface-variant text-center">This week</span>
+            {focusChange && (
+              <span className={`flex items-center gap-0.5 text-[10px] ${focusChange.up ? "text-tertiary" : "text-secondary"}`}>
+                <span className="material-symbols-outlined text-[12px]">
+                  {focusChange.up ? "trending_up" : "trending_down"}
+                </span>
+                {Math.abs(focusChange.pct)}%
+              </span>
+            )}
           </div>
         </section>
 

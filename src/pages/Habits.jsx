@@ -113,7 +113,7 @@ export default function Habits() {
                 key={f}
                 onClick={() => setFilter(f)}
                 className={`flex-1 py-2 px-md rounded-lg text-label-md transition-all duration-200 capitalize ${
-                  filter === f ? "bg-white text-primary shadow-sm" : "text-on-surface-variant"
+                  filter === f ? "bg-surface-container-lowest text-primary shadow-sm" : "text-on-surface-variant"
                 }`}
               >
                 {f}
@@ -139,7 +139,7 @@ export default function Habits() {
               <div
                 key={habit.id}
                 onClick={() => navigate(`/habits/${habit.id}/edit`)}
-                className="rounded-xl p-md flex items-center gap-md shadow-card border border-outline-variant/30 bg-white group cursor-pointer"
+                className="rounded-xl p-md flex items-center gap-md shadow-card border border-outline-variant/30 bg-surface-container-lowest group cursor-pointer"
               >
                 <div className={`w-12 h-12 rounded-xl ${colors.bg} flex items-center justify-center ${colors.text} transition-transform group-active:scale-95`}>
                   <span className="material-symbols-outlined">{habit.icon || "task_alt"}</span>

@@ -27,7 +27,7 @@ function TextField({ label, value, onChange, placeholder }) {
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full px-lg py-4 bg-white border border-outline-variant rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all text-body-lg placeholder:text-outline outline-none"
+        className="w-full px-lg py-4 bg-surface-container-lowest border border-outline-variant rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all text-body-lg placeholder:text-outline outline-none"
       />
     </div>
   );
@@ -105,7 +105,7 @@ export function AddSubjectSheet({ onClose }) {
               className={`aspect-square flex items-center justify-center rounded-xl transition-all ${
                 icon === ic
                   ? "bg-primary-fixed text-on-primary-fixed-variant border-2 border-primary"
-                  : "bg-white text-on-surface-variant border border-outline-variant hover:bg-surface-container"
+                  : "bg-surface-container-lowest text-on-surface-variant border border-outline-variant hover:bg-surface-container"
               }`}
             >
               <span className={`material-symbols-outlined ${icon === ic ? "icon-filled" : ""}`}>{ic}</span>
@@ -159,7 +159,7 @@ export function AddLevelSheet({ onClose }) {
               key={s.id}
               onClick={() => setSubjectId(s.id)}
               className={`px-lg py-2 rounded-full text-label-md transition-all ${
-                subjectId === s.id ? "bg-primary text-on-primary" : "bg-white border border-outline-variant text-on-surface-variant"
+                subjectId === s.id ? "bg-primary text-on-primary" : "bg-surface-container-lowest border border-outline-variant text-on-surface-variant"
               }`}
             >
               {s.name}
@@ -227,7 +227,7 @@ export function AddCourseSheet({ onClose }) {
                 setLevelId(null);
               }}
               className={`px-lg py-2 rounded-full text-label-md transition-all ${
-                subjectId === s.id ? "bg-primary text-on-primary" : "bg-white border border-outline-variant text-on-surface-variant"
+                subjectId === s.id ? "bg-primary text-on-primary" : "bg-surface-container-lowest border border-outline-variant text-on-surface-variant"
               }`}
             >
               {s.name}
@@ -249,7 +249,7 @@ export function AddCourseSheet({ onClose }) {
                 key={l.id}
                 onClick={() => setLevelId(l.id)}
                 className={`px-lg py-2 rounded-full text-label-md transition-all ${
-                  activeLevelId === l.id ? "bg-primary-container text-on-primary-container" : "bg-white border border-outline-variant text-on-surface-variant"
+                  activeLevelId === l.id ? "bg-primary-container text-on-primary-container" : "bg-surface-container-lowest border border-outline-variant text-on-surface-variant"
                 }`}
               >
                 {l.name}
@@ -329,7 +329,7 @@ export function AddLessonSheet({ onClose }) {
                 setCourseId(null);
               }}
               className={`px-lg py-2 rounded-full text-label-md transition-all ${
-                subjectId === s.id ? "bg-primary text-on-primary" : "bg-white border border-outline-variant text-on-surface-variant"
+                subjectId === s.id ? "bg-primary text-on-primary" : "bg-surface-container-lowest border border-outline-variant text-on-surface-variant"
               }`}
             >
               {s.name}
@@ -352,7 +352,7 @@ export function AddLessonSheet({ onClose }) {
                   setCourseId(null);
                 }}
                 className={`px-lg py-2 rounded-full text-label-md transition-all ${
-                  activeLevelId === l.id ? "bg-primary-container text-on-primary-container" : "bg-white border border-outline-variant text-on-surface-variant"
+                  activeLevelId === l.id ? "bg-primary-container text-on-primary-container" : "bg-surface-container-lowest border border-outline-variant text-on-surface-variant"
                 }`}
               >
                 {l.name}
@@ -374,7 +374,7 @@ export function AddLessonSheet({ onClose }) {
                   key={c.id}
                   onClick={() => setCourseId(c.id)}
                   className={`px-lg py-2 rounded-full text-label-md transition-all ${
-                    activeCourseId === c.id ? "bg-secondary-fixed text-on-secondary-fixed-variant" : "bg-white border border-outline-variant text-on-surface-variant"
+                    activeCourseId === c.id ? "bg-secondary-fixed text-on-secondary-fixed-variant" : "bg-surface-container-lowest border border-outline-variant text-on-surface-variant"
                   }`}
                 >
                   {c.name}

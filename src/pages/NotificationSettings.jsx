@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { getSetting, setSetting } from "../db/db";
+import { getSetting, setSetting, exportAllData, importAllData } from "../db/db";
 import { requestNotificationPermission, getNotificationPermission } from "../utils/notifications";
+import { useTheme } from "../utils/theme";
 
 function Toggle({ checked, onChange }) {
   return (
@@ -28,6 +29,9 @@ export default function NotificationSettings() {
   const [summaryTime, setSummaryTime] = useState("08:00");
   const [editingTime, setEditingTime] = useState(false);
   const [permission, setPermission] = useState("default");
+  const { mode, setThemeMode } = useTheme();
+  const [backupStatus, setBackupStatus] = useState(null); // { type: 'success'|'error', message }
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     (async () => {
@@ -55,6 +59,52 @@ export default function NotificationSettings() {
     const period = hour >= 12 ? "PM" : "AM";
     const displayHour = hour % 12 === 0 ? 12 : hour % 12;
     return `${displayHour}:${m} ${period}`;
+  };
+
+  const handleExport = async () => {
+    try {
+      const backup = await exportAllData();
+      const json = JSON.stringify(backup, null, 2);
+      const blob = new Blob([json], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const dateStr = new Date().toISOString().split("T")[0];
+      a.href = url;
+      a.download = `ritual-backup-${dateStr}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      setBackupStatus({ type: "success", message: "Backup file downloaded." });
+    } catch (err) {
+      setBackupStatus({ type: "error", message: "Could not create backup file." });
+    }
+  };
+
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleImportFile = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!confirm("Importing will replace ALL current data with the contents of this file. Continue?")) {
+      e.target.value = "";
+      return;
+    }
+
+    try {
+      const text = await file.text();
+      const json = JSON.parse(text);
+      await importAllData(json);
+      setBackupStatus({ type: "success", message: "Data restored successfully. Reloading..." });
+      setTimeout(() => window.location.reload(), 1200);
+    } catch (err) {
+      setBackupStatus({ type: "error", message: "Invalid or corrupted backup file." });
+    } finally {
+      e.target.value = "";
+    }
   };
 
   return (
@@ -158,7 +208,7 @@ export default function NotificationSettings() {
           </div>
 
           {editingTime && (
-            <div className="mt-md p-lg bg-white rounded-xl border border-primary/10 shadow-lg">
+            <div className="mt-md p-lg bg-surface-container-lowest rounded-xl border border-primary/10 shadow-lg">
               <div className="flex flex-col items-center gap-md">
                 <input
                   type="time"
@@ -186,6 +236,89 @@ export default function NotificationSettings() {
               </div>
             </div>
           )}
+        </section>
+
+        {/* Appearance */}
+        <section className="mt-xl">
+          <div className="px-md mb-sm">
+            <span className="text-label-md text-on-surface-variant uppercase tracking-wider">Appearance</span>
+          </div>
+          <div className="bg-surface-container-lowest rounded-xl shadow-card p-md flex items-center gap-sm">
+            {[
+              { key: "light", label: "Light", icon: "light_mode" },
+              { key: "dark", label: "Dark", icon: "dark_mode" },
+              { key: "system", label: "System", icon: "settings_suggest" },
+            ].map((opt) => (
+              <button
+                key={opt.key}
+                onClick={() => setThemeMode(opt.key)}
+                className={`flex-1 flex flex-col items-center gap-1 py-md rounded-xl transition-all ${
+                  mode === opt.key
+                    ? "bg-primary-container text-on-primary-container"
+                    : "text-on-surface-variant hover:bg-surface-container-low"
+                }`}
+              >
+                <span className="material-symbols-outlined">{opt.icon}</span>
+                <span className="text-label-md">{opt.label}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {/* Data Backup */}
+        <section className="mt-xl mb-xl">
+          <div className="px-md mb-sm">
+            <span className="text-label-md text-on-surface-variant uppercase tracking-wider">Data Backup</span>
+          </div>
+          <div className="bg-surface-container-lowest rounded-xl shadow-card overflow-hidden">
+            <button
+              onClick={handleExport}
+              className="w-full flex items-center justify-between p-md hover:bg-surface-container-low transition-colors duration-200"
+            >
+              <div className="flex items-center gap-md">
+                <div className="w-10 h-10 bg-primary-fixed rounded-xl flex items-center justify-center text-primary">
+                  <span className="material-symbols-outlined">download</span>
+                </div>
+                <div className="text-left">
+                  <p className="text-body-lg text-on-surface">Export data</p>
+                  <p className="text-body-sm text-on-surface-variant">Save all your data as a JSON file</p>
+                </div>
+              </div>
+              <span className="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+            </button>
+            <div className="border-t border-surface-variant">
+              <button
+                onClick={handleImportClick}
+                className="w-full flex items-center justify-between p-md hover:bg-surface-container-low transition-colors duration-200"
+              >
+                <div className="flex items-center gap-md">
+                  <div className="w-10 h-10 bg-secondary-fixed rounded-xl flex items-center justify-center text-secondary">
+                    <span className="material-symbols-outlined">upload</span>
+                  </div>
+                  <div className="text-left">
+                    <p className="text-body-lg text-on-surface">Import data</p>
+                    <p className="text-body-sm text-on-surface-variant">Restore from a JSON backup file</p>
+                  </div>
+                </div>
+                <span className="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+              </button>
+            </div>
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="application/json"
+            onChange={handleImportFile}
+            className="hidden"
+          />
+          {backupStatus && (
+            <p className={`mt-sm px-md text-body-sm ${backupStatus.type === "success" ? "text-tertiary" : "text-error"}`}>
+              {backupStatus.message}
+            </p>
+          )}
+          <p className="mt-sm px-md text-label-md text-on-surface-variant">
+            Importing replaces all current data on this device. Export a backup first if you're unsure.
+          </p>
         </section>
       </main>
     </div>

@@ -10,8 +10,6 @@ const STATUS_OPTIONS = [
   { key: "completed", label: "Completed", icon: "check_circle", iconActive: "check_circle" },
 ];
 
-const DURATION_PRESETS = [15, 25, 45, 60];
-
 export default function LessonDetail() {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -28,42 +26,31 @@ export default function LessonDetail() {
   ) || [];
 
   const [notes, setNotes] = useState("");
-  const [durationMin, setDurationMin] = useState(25);
-  const [timeLeft, setTimeLeft] = useState(25 * 60);
+  const [elapsedSec, setElapsedSec] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
-  const [showCustomDuration, setShowCustomDuration] = useState(false);
-  const [customDuration, setCustomDuration] = useState("");
   const intervalRef = useRef(null);
-  const timerKey = `timer_lesson_${lessonId}`;
+  const timerKey = `stopwatch_lesson_${lessonId}`;
 
   useEffect(() => {
     if (lesson) setNotes(lesson.notes || "");
   }, [lesson?.id]);
 
-  // On mount: restore any in-flight timer from storage (survives reload/close)
+  // On mount: restore any in-flight stopwatch from storage (survives reload/close)
   useEffect(() => {
     (async () => {
       const saved = await getSetting(timerKey, null);
-      if (saved && saved.endTime) {
-        const remainingMs = saved.endTime - Date.now();
-        setDurationMin(saved.durationMin);
-        if (remainingMs > 0) {
-          setTimeLeft(Math.ceil(remainingMs / 1000));
-          setIsRunning(true);
-        } else {
-          // Timer finished while app was closed
-          setTimeLeft(saved.durationMin * 60);
-          setIsRunning(false);
-          await setSetting(timerKey, null);
-          await logSessionDuration(saved.durationMin);
-        }
-      } else if (saved && typeof saved.remainingSec === "number") {
-        // Paused state
-        setDurationMin(saved.durationMin);
-        setTimeLeft(saved.remainingSec);
-      } else if (saved && saved.durationMin) {
-        setDurationMin(saved.durationMin);
-        setTimeLeft(saved.durationMin * 60);
+      if (saved && saved.startTime) {
+        // Running: elapsed = accumulated (paused time) + time since startTime
+        const elapsed = (saved.accumulatedSec || 0) + Math.floor((Date.now() - saved.startTime) / 1000);
+        setElapsedSec(elapsed);
+        setIsRunning(true);
+      } else if (saved && typeof saved.accumulatedSec === "number") {
+        // Paused: just show accumulated time
+        setElapsedSec(saved.accumulatedSec);
+        setIsRunning(false);
+      } else {
+        setElapsedSec(0);
+        setIsRunning(false);
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -77,17 +64,9 @@ export default function LessonDetail() {
     }
     intervalRef.current = setInterval(async () => {
       const saved = await getSetting(timerKey, null);
-      if (!saved || !saved.endTime) return;
-      const remainingMs = saved.endTime - Date.now();
-      if (remainingMs <= 0) {
-        clearInterval(intervalRef.current);
-        setIsRunning(false);
-        setTimeLeft(durationMin * 60);
-        await setSetting(timerKey, null);
-        await logSessionDuration(saved.durationMin);
-      } else {
-        setTimeLeft(Math.ceil(remainingMs / 1000));
-      }
+      if (!saved || !saved.startTime) return;
+      const elapsed = (saved.accumulatedSec || 0) + Math.floor((Date.now() - saved.startTime) / 1000);
+      setElapsedSec(elapsed);
     }, 1000);
     return () => clearInterval(intervalRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -119,40 +98,33 @@ export default function LessonDetail() {
     await db.lessons.update(lesson.id, { notes: val });
   };
 
-  const toggleTimer = async () => {
-    if (isRunning) {
-      // Pause: persist remaining duration as a fresh "not started" state
-      clearInterval(intervalRef.current);
-      setIsRunning(false);
-      await setSetting(timerKey, { durationMin, remainingSec: timeLeft, endTime: null });
-    } else {
-      const endTime = Date.now() + timeLeft * 1000;
-      await setSetting(timerKey, { durationMin, endTime });
-      setIsRunning(true);
+  const startStopwatch = async () => {
+    await setSetting(timerKey, { startTime: Date.now(), accumulatedSec: elapsedSec });
+    setIsRunning(true);
+  };
+
+  const pauseStopwatch = async () => {
+    clearInterval(intervalRef.current);
+    setIsRunning(false);
+    await setSetting(timerKey, { startTime: null, accumulatedSec: elapsedSec });
+  };
+
+  const stopAndSave = async () => {
+    clearInterval(intervalRef.current);
+    setIsRunning(false);
+    const totalSec = elapsedSec;
+    await setSetting(timerKey, null);
+    setElapsedSec(0);
+    if (totalSec >= 60) {
+      await logSessionDuration(Math.round(totalSec / 60));
     }
   };
 
-  const resetTimer = async () => {
+  const discardSession = async () => {
     clearInterval(intervalRef.current);
     setIsRunning(false);
-    setTimeLeft(durationMin * 60);
+    setElapsedSec(0);
     await setSetting(timerKey, null);
-  };
-
-  const selectDuration = async (mins) => {
-    if (isRunning) return;
-    setDurationMin(mins);
-    setTimeLeft(mins * 60);
-    setShowCustomDuration(false);
-    await setSetting(timerKey, { durationMin: mins, endTime: null });
-  };
-
-  const applyCustomDuration = () => {
-    const mins = parseInt(customDuration, 10);
-    if (!mins || mins <= 0) return;
-    const capped = Math.min(mins, 240);
-    selectDuration(capped);
-    setCustomDuration("");
   };
 
   const logSessionDuration = async (mins) => {
@@ -167,9 +139,12 @@ export default function LessonDetail() {
     }
   };
 
-  const minutes = Math.floor(timeLeft / 60);
-  const seconds = timeLeft % 60;
-  const display = `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+  const hours = Math.floor(elapsedSec / 3600);
+  const minutes = Math.floor((elapsedSec % 3600) / 60);
+  const seconds = elapsedSec % 60;
+  const display = hours > 0
+    ? `${hours}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`
+    : `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
 
   return (
     <div className="bg-background text-on-background font-body-lg min-h-screen pb-24">
@@ -195,8 +170,8 @@ export default function LessonDetail() {
             <h1 className="text-headline-lg-mobile text-white mb-2">{lesson.name}</h1>
             <div className="flex items-center gap-4 text-white/80">
               <div className="flex items-center gap-1">
-                <span className="material-symbols-outlined text-[18px]">schedule</span>
-                <span className="text-label-md">{durationMin} mins</span>
+                <span className="material-symbols-outlined text-[18px]">timer</span>
+                <span className="text-label-md">Stopwatch session</span>
               </div>
             </div>
           </div>
@@ -204,7 +179,7 @@ export default function LessonDetail() {
 
         <div className="grid grid-cols-1 gap-lg">
           {/* Status toggle */}
-          <div className="bg-white rounded-xl p-lg shadow-card border border-surface-container">
+          <div className="bg-surface-container-lowest rounded-xl p-lg shadow-card border border-surface-container">
             <h3 className="text-title-md mb-md text-on-surface">Lesson Status</h3>
             <div className="flex flex-col gap-2">
               {STATUS_OPTIONS.map((opt) => {
@@ -230,7 +205,7 @@ export default function LessonDetail() {
           </div>
 
           {/* Course progress mini card */}
-          <div className="bg-white rounded-xl p-lg shadow-card border border-surface-container flex items-center gap-lg">
+          <div className="bg-surface-container-lowest rounded-xl p-lg shadow-card border border-surface-container flex items-center gap-lg">
             <div className="relative w-16 h-16">
               <svg className="w-full h-full transform -rotate-90">
                 <circle className="text-surface-container-high" cx="32" cy="32" fill="transparent" r="28" stroke="currentColor" strokeWidth="6" />
@@ -259,80 +234,62 @@ export default function LessonDetail() {
             </div>
           </div>
 
-          {/* Focus timer */}
-          <div className="bg-white rounded-xl p-xl shadow-card border border-surface-container flex flex-col items-center justify-center text-center">
+          {/* Stopwatch */}
+          <div className="bg-surface-container-lowest rounded-xl p-xl shadow-card border border-surface-container flex flex-col items-center justify-center text-center">
             <div className="mb-lg">
-              <span className="material-symbols-outlined text-primary text-[48px] mb-2 icon-filled block">timer</span>
-              <h2 className="text-headline-lg-mobile text-on-surface">Deep Work Session</h2>
+              <span className={`material-symbols-outlined text-primary text-[48px] mb-2 block ${isRunning ? "icon-filled" : ""}`}>timer</span>
+              <h2 className="text-headline-lg-mobile text-on-surface">Study Session</h2>
               <p className="text-on-surface-variant text-body-lg">Focus on {lesson.name}</p>
             </div>
-            <div className="text-display-lg mb-md text-primary tracking-tighter">{display}</div>
+            <div className="text-display-lg mb-xl text-primary tracking-tighter tabular-nums">{display}</div>
 
-            {/* Duration picker */}
-            <div className="w-full max-w-xs mb-lg">
-              <div className="flex gap-sm justify-center mb-sm">
-                {DURATION_PRESETS.map((mins) => (
-                  <button
-                    key={mins}
-                    onClick={() => selectDuration(mins)}
-                    disabled={isRunning}
-                    className={`px-md py-1.5 rounded-full text-label-md transition-all ${
-                      durationMin === mins
-                        ? "bg-primary text-on-primary"
-                        : "bg-surface-container text-on-surface-variant hover:bg-surface-container-high"
-                    } ${isRunning ? "opacity-50 cursor-not-allowed" : ""}`}
-                  >
-                    {mins}m
-                  </button>
-                ))}
-                <button
-                  onClick={() => !isRunning && setShowCustomDuration((v) => !v)}
-                  disabled={isRunning}
-                  className={`px-md py-1.5 rounded-full text-label-md transition-all ${
-                    showCustomDuration || !DURATION_PRESETS.includes(durationMin)
-                      ? "bg-primary text-on-primary"
-                      : "bg-surface-container text-on-surface-variant hover:bg-surface-container-high"
-                  } ${isRunning ? "opacity-50 cursor-not-allowed" : ""}`}
-                >
-                  {!DURATION_PRESETS.includes(durationMin) ? `${durationMin}m` : "Custom"}
-                </button>
-              </div>
-              {showCustomDuration && (
-                <div className="flex gap-sm">
-                  <input
-                    type="number"
-                    min="1"
-                    max="240"
-                    value={customDuration}
-                    onChange={(e) => setCustomDuration(e.target.value)}
-                    placeholder="Minutes"
-                    className="flex-1 px-md py-2 bg-surface-container-low border border-outline-variant rounded-xl text-body-sm outline-none focus:ring-2 focus:ring-primary"
-                  />
-                  <button
-                    onClick={applyCustomDuration}
-                    className="px-lg py-2 bg-primary text-on-primary rounded-xl text-label-md"
-                  >
-                    Set
-                  </button>
-                </div>
-              )}
-            </div>
             <div className="flex flex-col w-full max-w-xs gap-md">
-              <button
-                onClick={toggleTimer}
-                className="bg-secondary-container hover:bg-secondary text-white text-title-md py-lg px-xl rounded-full shadow-lg active:scale-95 transition-all duration-200 flex items-center justify-center gap-2"
-              >
-                <span className="material-symbols-outlined">{isRunning ? "pause" : "play_arrow"}</span>
-                <span>{isRunning ? "Pause Session" : timeLeft < 25 * 60 ? "Resume Session" : "Start Study Session"}</span>
-              </button>
-              <button onClick={resetTimer} className="text-on-surface-variant text-label-md hover:underline">
-                Reset Timer
-              </button>
+              {!isRunning && elapsedSec === 0 && (
+                <button
+                  onClick={startStopwatch}
+                  className="bg-secondary-container hover:bg-secondary text-white text-title-md py-lg px-xl rounded-full shadow-lg active:scale-95 transition-all duration-200 flex items-center justify-center gap-2"
+                >
+                  <span className="material-symbols-outlined">play_arrow</span>
+                  <span>Start Studying</span>
+                </button>
+              )}
+
+              {isRunning && (
+                <button
+                  onClick={pauseStopwatch}
+                  className="bg-secondary-container hover:bg-secondary text-white text-title-md py-lg px-xl rounded-full shadow-lg active:scale-95 transition-all duration-200 flex items-center justify-center gap-2"
+                >
+                  <span className="material-symbols-outlined">pause</span>
+                  <span>Pause</span>
+                </button>
+              )}
+
+              {!isRunning && elapsedSec > 0 && (
+                <>
+                  <button
+                    onClick={startStopwatch}
+                    className="border-2 border-primary text-primary text-title-md py-lg px-xl rounded-full active:scale-95 transition-all duration-200 flex items-center justify-center gap-2"
+                  >
+                    <span className="material-symbols-outlined">play_arrow</span>
+                    <span>Resume</span>
+                  </button>
+                  <button
+                    onClick={stopAndSave}
+                    className="bg-primary text-on-primary text-title-md py-lg px-xl rounded-full shadow-lg active:scale-95 transition-all duration-200 flex items-center justify-center gap-2"
+                  >
+                    <span className="material-symbols-outlined icon-filled">check_circle</span>
+                    <span>Stop &amp; Save</span>
+                  </button>
+                  <button onClick={discardSession} className="text-on-surface-variant text-label-md hover:underline">
+                    Discard
+                  </button>
+                </>
+              )}
             </div>
           </div>
 
           {/* Notes */}
-          <div className="bg-white rounded-xl p-lg shadow-card border border-surface-container">
+          <div className="bg-surface-container-lowest rounded-xl p-lg shadow-card border border-surface-container">
             <div className="flex items-center justify-between mb-md">
               <h3 className="text-title-md text-on-surface">Study Notes</h3>
               <span className="material-symbols-outlined text-on-surface-variant">edit</span>

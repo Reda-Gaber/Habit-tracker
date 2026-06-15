@@ -118,11 +118,14 @@ export default function Stats() {
               <p className="text-label-md text-on-surface-variant mt-xs">Tasks done</p>
             </div>
           </div>
-          <div className="col-span-2 bg-primary-container text-on-primary-container p-lg rounded-xl flex items-center justify-between">
+          <div onClick={() => navigate("/stats/focus-time")} className="col-span-2 bg-primary-container text-on-primary-container p-lg rounded-xl flex items-center justify-between cursor-pointer active:scale-[0.99] transition-transform">
             <div>
               <p className="text-label-md opacity-80 uppercase tracking-widest">Focus Duration</p>
               <p className="text-display-lg mt-xs">{totalFocusHours}h</p>
-              <p className="text-body-sm opacity-90 mt-xs">Total study time</p>
+              <p className="text-body-sm opacity-90 mt-xs flex items-center gap-1">
+                Total study time
+                <span className="material-symbols-outlined text-[16px]">chevron_right</span>
+              </p>
             </div>
             <div className="w-20 h-20 relative">
               <svg className="w-full h-full transform -rotate-90">

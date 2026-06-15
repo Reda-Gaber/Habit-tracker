@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
 import { db, seedIfEmpty, getSetting } from "./db/db";
 import { runNotificationChecks } from "./utils/notifications";
+import { useTheme } from "./utils/theme";
 
 import Onboarding from "./pages/Onboarding";
 import Dashboard from "./pages/Dashboard";
@@ -12,6 +13,7 @@ import Learning from "./pages/Learning";
 import CourseDetail from "./pages/CourseDetail";
 import LessonDetail from "./pages/LessonDetail";
 import Stats from "./pages/Stats";
+import FocusTime from "./pages/FocusTime";
 import AddEditHabit from "./pages/AddEditHabit";
 import AddEditTask from "./pages/AddEditTask";
 import NotificationSettings from "./pages/NotificationSettings";
@@ -19,6 +21,7 @@ import NotificationSettings from "./pages/NotificationSettings";
 function App() {
   const [ready, setReady] = useState(false);
   const [onboarded, setOnboarded] = useState(false);
+  useTheme();
 
   useEffect(() => {
     (async () => {
@@ -63,6 +66,7 @@ function App() {
         <Route path="/learning/course/:id" element={<CourseDetail />} />
         <Route path="/learning/lesson/:id" element={<LessonDetail />} />
         <Route path="/stats" element={<Stats />} />
+        <Route path="/stats/focus-time" element={<FocusTime />} />
         <Route path="/settings/notifications" element={<NotificationSettings />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

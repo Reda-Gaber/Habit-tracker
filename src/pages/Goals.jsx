@@ -61,7 +61,7 @@ export default function Goals() {
           {goals.map((goal) => (
             <div
               key={goal.id}
-              className="bg-white rounded-xl shadow-card p-lg flex flex-col gap-md transition-all duration-300"
+              className="bg-surface-container-lowest rounded-xl shadow-card p-lg flex flex-col gap-md transition-all duration-300"
             >
               <div className="flex justify-between items-start">
                 <div className="flex items-center gap-md">
@@ -135,7 +135,7 @@ export default function Goals() {
         <section className="pt-lg pb-xl">
           <button
             onClick={() => setShowAdd(true)}
-            className="w-full h-16 bg-white border-2 border-dashed border-outline-variant rounded-xl flex items-center justify-center gap-sm text-on-surface-variant hover:border-primary hover:text-primary transition-all duration-200 active:scale-[0.98]"
+            className="w-full h-16 bg-surface-container-lowest border-2 border-dashed border-outline-variant rounded-xl flex items-center justify-center gap-sm text-on-surface-variant hover:border-primary hover:text-primary transition-all duration-200 active:scale-[0.98]"
           >
             <span className="material-symbols-outlined">add_circle</span>
             <span className="text-title-md">Add New Goal</span>
@@ -185,7 +185,7 @@ function AddGoalSheet({ onClose }) {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="e.g. Learn Spanish"
-            className="w-full px-lg py-4 bg-white border border-outline-variant rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all text-body-lg placeholder:text-outline outline-none"
+            className="w-full px-lg py-4 bg-surface-container-lowest border border-outline-variant rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all text-body-lg placeholder:text-outline outline-none"
           />
         </div>
         <div className="space-y-sm">
@@ -194,7 +194,7 @@ function AddGoalSheet({ onClose }) {
             type="date"
             value={targetDate}
             onChange={(e) => setTargetDate(e.target.value)}
-            className="w-full px-lg py-4 bg-white border border-outline-variant rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all text-body-lg outline-none"
+            className="w-full px-lg py-4 bg-surface-container-lowest border border-outline-variant rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all text-body-lg outline-none"
           />
         </div>
         <button

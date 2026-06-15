@@ -105,7 +105,7 @@ export default function AddEditHabit() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="What is your new ritual?"
-              className="w-full px-lg py-4 bg-white border border-outline-variant rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all text-body-lg placeholder:text-outline outline-none"
+              className="w-full px-lg py-4 bg-surface-container-lowest border border-outline-variant rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all text-body-lg placeholder:text-outline outline-none"
             />
             <div className="absolute right-4 top-1/2 -translate-y-1/2">
               <span className="material-symbols-outlined text-primary icon-filled">auto_awesome</span>
@@ -124,7 +124,7 @@ export default function AddEditHabit() {
                 className={`aspect-square flex items-center justify-center rounded-xl transition-all ${
                   icon === ic
                     ? "bg-primary-fixed text-on-primary-fixed-variant border-2 border-primary"
-                    : "bg-white text-on-surface-variant border border-outline-variant hover:bg-surface-container"
+                    : "bg-surface-container-lowest text-on-surface-variant border border-outline-variant hover:bg-surface-container"
                 }`}
               >
                 <span className={`material-symbols-outlined ${icon === ic ? "icon-filled" : ""}`}>{ic}</span>
@@ -144,7 +144,7 @@ export default function AddEditHabit() {
                   setDays([0, 1, 2, 3, 4, 5, 6]);
                 }}
                 className={`px-4 py-1.5 rounded-full text-label-md transition-all ${
-                  frequency === "daily" ? "bg-white text-on-surface shadow-sm" : "text-on-surface-variant"
+                  frequency === "daily" ? "bg-surface-container-lowest text-on-surface shadow-sm" : "text-on-surface-variant"
                 }`}
               >
                 Daily
@@ -152,7 +152,7 @@ export default function AddEditHabit() {
               <button
                 onClick={() => setFrequency("weekly")}
                 className={`px-4 py-1.5 rounded-full text-label-md transition-all ${
-                  frequency === "weekly" ? "bg-white text-on-surface shadow-sm" : "text-on-surface-variant"
+                  frequency === "weekly" ? "bg-surface-container-lowest text-on-surface shadow-sm" : "text-on-surface-variant"
                 }`}
               >
                 Specific
@@ -167,7 +167,7 @@ export default function AddEditHabit() {
                   <button
                     onClick={() => toggleDay(d.dow)}
                     className={`w-full aspect-square flex items-center justify-center rounded-lg text-title-md transition-all ${
-                      active ? "bg-primary-container text-on-primary-container" : "bg-white border border-outline-variant text-on-surface-variant"
+                      active ? "bg-primary-container text-on-primary-container" : "bg-surface-container-lowest border border-outline-variant text-on-surface-variant"
                     }`}
                   >
                     {d.label}
@@ -183,7 +183,7 @@ export default function AddEditHabit() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-lg">
           <section className="space-y-sm">
             <label className="text-label-md text-on-surface-variant uppercase tracking-wider">Reminder Time</label>
-            <div className="flex items-center gap-md px-lg py-4 bg-white border border-outline-variant rounded-xl">
+            <div className="flex items-center gap-md px-lg py-4 bg-surface-container-lowest border border-outline-variant rounded-xl">
               <span className="material-symbols-outlined text-on-surface-variant">schedule</span>
               <input
                 type="time"
@@ -196,7 +196,7 @@ export default function AddEditHabit() {
 
           <section className="space-y-sm">
             <label className="text-label-md text-on-surface-variant uppercase tracking-wider">Color Tag</label>
-            <div className="flex items-center h-[60px] gap-4 px-lg py-2 bg-white border border-outline-variant rounded-xl justify-between">
+            <div className="flex items-center h-[60px] gap-4 px-lg py-2 bg-surface-container-lowest border border-outline-variant rounded-xl justify-between">
               {COLORS.map((c) => (
                 <button
                   key={c.key}

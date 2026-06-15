@@ -205,12 +205,12 @@ export default function Learning() {
                     onClick={() => deleteLevel(level)}
                     aria-label="Delete level"
                     className="px-1.5 py-1 rounded-full rounded-l-none bg-primary-container text-on-primary-container hover:text-error transition-colors"
-                    >
+                  >
                     <span 
-                      className="material-symbols-outlined text-[14px]"
-                      style={{ background: "#ad2929", borderRadius: "50%", padding: "3px" }}
-                      >
-                        close</span>
+                    style={{ background: "#ad2929", borderRadius: "50%", padding: "3px" }}
+                    className="material-symbols-outlined text-[14px]"
+                    >
+                      close</span>
                   </button>
                 )}
               </div>
