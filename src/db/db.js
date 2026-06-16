@@ -15,6 +15,19 @@ db.version(1).stores({
   settings: "key", // key-value store for notification prefs, onboarding flag, etc.
 });
 
+db.version(2).stores({
+  habits: "++id, name, frequency, days, reminderTime, color, icon, createdAt",
+  habitLogs: "++id, habitId, date",
+  tasks: "++id, title, dueDate, priority, category, completed, createdAt",
+  goals: "++id, title, targetDate, progress, linkedType, linkedId, createdAt",
+  subjects: "++id, name, icon, color, order",
+  levels: "++id, subjectId, name, order",
+  courses: "++id, levelId, name, description, order",
+  lessons: "++id, courseId, name, status, notes, completedAt, order",
+  studySessions: "++id, lessonId, duration, date",
+  settings: "key",
+});
+
 // ---------- Seed data (first run only) ----------
 export async function seedIfEmpty() {
   const habitCount = await db.habits.count();

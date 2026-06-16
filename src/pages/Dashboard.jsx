@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db, getSetting } from "../db/db";
+import { getGoalProgress } from "../utils/goalProgress";
 import TopAppBar from "../components/TopAppBar";
 import BottomNav from "../components/BottomNav";
 import FAB from "../components/FAB";
@@ -85,9 +86,6 @@ export default function Dashboard() {
 
   // Goals overview
   const goals = useLiveQuery(() => db.goals.toArray(), []) || [];
-  const avgGoalProgress = goals.length
-    ? Math.round(goals.reduce((sum, g) => sum + g.progress, 0) / goals.length)
-    : 0;
 
   // Today's tasks (for full list on dashboard)
   const todaysTaskList = tasks
@@ -143,6 +141,14 @@ export default function Dashboard() {
   const totalLessonsAll = allLessons.length;
   const completedLessonsAll = allLessons.filter((l) => l.status === "completed").length;
 
+  const learningData = { subjects, levels: allLevels, courses: allCourses, lessons: allLessons };
+  const avgGoalProgress = goals.length
+    ? Math.round(goals.reduce((sum, g) => sum + getGoalProgress(g, learningData), 0) / goals.length)
+    : 0;
+  const goalsWithProgress = goals.map((goal) => ({
+    ...goal,
+    effectiveProgress: getGoalProgress(goal, learningData),
+  }));
 
   const todayLabel = today.toLocaleDateString("en-US", {
     weekday: "long",
@@ -321,14 +327,14 @@ export default function Dashboard() {
                 No goals yet — add one to start planning ahead.
               </p>
             )}
-            {goals.map((goal) => (
+            {goalsWithProgress.map((goal) => (
               <div key={goal.id}>
                 <div className="flex justify-between items-center mb-1">
                   <span className="text-body-sm text-on-surface truncate pr-md">{goal.title}</span>
-                  <span className="text-label-md text-primary shrink-0">{goal.progress}%</span>
+                  <span className="text-label-md text-primary shrink-0">{goal.effectiveProgress}%</span>
                 </div>
                 <div className="w-full h-2 bg-surface-container rounded-full overflow-hidden">
-                  <div className="h-full bg-primary rounded-full" style={{ width: `${goal.progress}%` }} />
+                  <div className="h-full bg-primary rounded-full" style={{ width: `${goal.effectiveProgress}%` }} />
                 </div>
               </div>
             ))}
