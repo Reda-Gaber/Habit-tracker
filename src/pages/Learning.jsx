@@ -121,7 +121,7 @@ export default function Learning() {
 
   return (
     <div className="bg-background text-on-surface min-h-screen pb-32">
-      <TopAppBar title="Knowledge Hub" showProfile rightIcon="notifications" onRightClick={() => navigate("/settings/notifications")} />
+      <TopAppBar title="Knowledge Hub" showProfile />
 
       <main className="px-container_margin_mobile pt-20 max-w-2xl mx-auto py-lg flex flex-col gap-xl">
         {subjects.length > 1 && (

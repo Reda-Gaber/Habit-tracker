@@ -19,6 +19,8 @@ import FocusTime from "./pages/FocusTime";
 import AddEditHabit from "./pages/AddEditHabit";
 import AddEditTask from "./pages/AddEditTask";
 import NotificationSettings from "./pages/NotificationSettings";
+import Notifications from "./pages/Notifications";
+import NotificationToastHost from "./components/NotificationToastHost";
 
 function App() {
   const [ready, setReady] = useState(false);
@@ -51,6 +53,7 @@ function App() {
 
   return (
     <HashRouter>
+      {onboarded && <NotificationToastHost />}
       <Routes>
         <Route
           path="/onboarding"
@@ -72,6 +75,7 @@ function App() {
         <Route path="/stats" element={<Stats />} />
         <Route path="/stats/focus-time" element={<FocusTime />} />
         <Route path="/settings/notifications" element={<NotificationSettings />} />
+        <Route path="/notifications" element={<Notifications />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </HashRouter>

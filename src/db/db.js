@@ -43,6 +43,23 @@ db.version(3).stores({
   settings: "key",
 });
 
+// In-app notification messages. type = 'success' | 'warning' | 'danger'.
+// dedupeKey prevents the same event from generating duplicate messages.
+db.version(4).stores({
+  habits: "++id, name, frequency, days, reminderTime, color, icon, createdAt",
+  habitLogs: "++id, habitId, date",
+  tasks: "++id, title, dueDate, priority, category, completed, createdAt",
+  goals: "++id, title, targetDate, progress, linkedType, linkedId, targetAmount, createdAt",
+  subjects: "++id, name, icon, color, order",
+  levels: "++id, subjectId, name, order",
+  courses: "++id, levelId, name, description, order",
+  lessons: "++id, courseId, name, status, notes, completedAt, order",
+  studySessions: "++id, lessonId, duration, date",
+  transactions: "++id, type, amount, category, date, createdAt",
+  notifications: "++id, dedupeKey, createdAt",
+  settings: "key",
+});
+
 // ---------- Seed data (first run only) ----------
 export async function seedIfEmpty() {
   const habitCount = await db.habits.count();
@@ -134,6 +151,34 @@ export async function seedIfEmpty() {
     { type: "expense", amount: 60, category: "Food & Drink", date: fmt(today), note: "", createdAt: Date.now() },
   ]);
 
+  // Sample notifications
+  await db.notifications.bulkAdd([
+    {
+      type: "success",
+      title: "Streak milestone!",
+      message: '"Morning Run" hit a 7-day streak. Keep it up!',
+      read: false,
+      dedupeKey: "seed_streak",
+      createdAt: Date.now() - 3 * 3600000,
+    },
+    {
+      type: "warning",
+      title: "Task due today",
+      message: '"Finish Q3 report draft" is due today.',
+      read: false,
+      dedupeKey: "seed_task_due",
+      createdAt: Date.now() - 6 * 3600000,
+    },
+    {
+      type: "danger",
+      title: "Falling behind",
+      message: '"Run a 10K race" is behind pace — only 20% done with less than half the time left.',
+      read: true,
+      dedupeKey: "seed_behind",
+      createdAt: Date.now() - 26 * 3600000,
+    },
+  ]);
+
   // Settings defaults
   await db.settings.bulkAdd([
     { key: "onboardingComplete", value: false },
@@ -166,6 +211,7 @@ const DATA_TABLES = [
   "lessons",
   "studySessions",
   "transactions",
+  "notifications",
   "settings",
 ];
 

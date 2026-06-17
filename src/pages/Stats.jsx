@@ -113,7 +113,7 @@ export default function Stats() {
 
   return (
     <div className="bg-background text-on-surface min-h-screen pb-32">
-      <TopAppBar title="Your Impact" showProfile rightIcon="notifications" onRightClick={() => navigate("/settings/notifications")} />
+      <TopAppBar title="Your Impact" showProfile />
 
       <main className="px-container_margin_mobile mt-20 space-y-xl max-w-2xl mx-auto">
         {/* Overview bento */}

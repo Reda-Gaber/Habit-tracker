@@ -82,7 +82,7 @@ export default function Goals() {
 
   return (
     <div className="bg-background text-on-background min-h-screen pb-24">
-      <TopAppBar title="Your Goals" showProfile rightIcon="notifications" onRightClick={() => navigate("/settings/notifications")} />
+      <TopAppBar title="Your Goals" showProfile />
 
       <main className="px-container_margin_mobile mt-20 space-y-xl max-w-2xl mx-auto">
         {/* Hero */}

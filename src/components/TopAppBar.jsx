@@ -1,14 +1,16 @@
 import { useNavigate } from "react-router-dom";
+import { useLiveQuery } from "dexie-react-hooks";
+import { db } from "../db/db";
 
 export default function TopAppBar({
   title,
   subtitle,
   showBack = false,
   showProfile = false,
-  rightIcon = null,
-  onRightClick = () => {},
 }) {
   const navigate = useNavigate();
+  const notifications = useLiveQuery(() => db.notifications.toArray(), []) || [];
+  const unreadCount = notifications.filter((n) => !n.read).length;
 
   return (
     <header className="fixed top-0 left-0 w-full z-40 bg-surface flex justify-between items-center px-container_margin_mobile h-16">
@@ -34,15 +36,26 @@ export default function TopAppBar({
           )}
         </div>
       </div>
-      {rightIcon && (
+
+      <div className="flex items-center gap-xs">
         <button
-          onClick={onRightClick}
+          onClick={() => navigate("/settings/notifications")}
           className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-low transition-colors duration-200"
-          aria-label="Action"
+          aria-label="Settings"
         >
-          <span className="material-symbols-outlined">{rightIcon}</span>
+          <span className="material-symbols-outlined">settings</span>
         </button>
-      )}
+        <button
+          onClick={() => navigate("/notifications")}
+          className="relative w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-low transition-colors duration-200"
+          aria-label="Notifications"
+        >
+          <span className="material-symbols-outlined">notifications</span>
+          {unreadCount > 0 && (
+            <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-error rounded-full border-2 border-surface" />
+          )}
+        </button>
+      </div>
     </header>
   );
 }

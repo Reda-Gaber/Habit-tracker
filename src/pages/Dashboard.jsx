@@ -176,7 +176,7 @@ export default function Dashboard() {
 
   return (
     <div className="bg-background text-on-background min-h-screen pb-24">
-      <TopAppBar title={greeting} subtitle={todayLabel} showProfile rightIcon="notifications" onRightClick={() => navigate("/settings/notifications")} />
+      <TopAppBar title={greeting} subtitle={todayLabel} showProfile />
 
       <main className="pt-20 px-container_margin_mobile max-w-2xl mx-auto space-y-xl">
         {/* Top Cards */}

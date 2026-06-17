@@ -78,7 +78,7 @@ export default function Habits() {
 
   return (
     <div className="bg-background text-on-background min-h-screen pb-24">
-      <TopAppBar title="Daily Rituals" showProfile rightIcon="notifications" onRightClick={() => navigate("/settings/notifications")} />
+      <TopAppBar title="Daily Rituals" showProfile />
 
       <main className="pt-20 px-container_margin_mobile max-w-2xl mx-auto">
         {/* Hero Summary */}

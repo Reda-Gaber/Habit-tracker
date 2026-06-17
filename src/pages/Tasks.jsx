@@ -59,7 +59,7 @@ export default function Tasks() {
 
   return (
     <div className="bg-background text-on-background min-h-screen flex flex-col">
-      <TopAppBar title="Task Manager" showProfile rightIcon="notifications" onRightClick={() => navigate("/settings/notifications")} />
+      <TopAppBar title="Task Manager" showProfile />
 
       <main className="flex-grow pt-24 pb-32 px-container_margin_mobile max-w-2xl mx-auto w-full">
         {/* Today Section */}
