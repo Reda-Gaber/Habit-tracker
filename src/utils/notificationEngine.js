@@ -1,14 +1,33 @@
-import { db, getSetting } from "../db/db";
+import { db, getSetting, setSetting } from "../db/db";
 import { getGoalProgress } from "./goalProgress";
 
 function todayStr() {
   return new Date().toISOString().split("T")[0];
 }
 
+// Keeps a permanent log of every dedupeKey that has ever fired, completely
+// independent from the notifications table. This is what actually prevents
+// repeats — checking the notifications table itself doesn't work, because
+// the user can read/delete rows there, and the underlying condition (an
+// overdue task, an exceeded budget, etc.) would then look "new" again on
+// the very next check and re-fire endlessly.
+async function hasFired(key) {
+  const fired = await getSetting("firedNotificationKeys", []);
+  return fired.includes(key);
+}
+
+async function markFired(key) {
+  const fired = await getSetting("firedNotificationKeys", []);
+  if (!fired.includes(key)) {
+    fired.push(key);
+    await setSetting("firedNotificationKeys", fired);
+  }
+}
+
 async function notifyOnce(dedupeKey, type, title, message) {
-  const existing = await db.notifications.where("dedupeKey").equals(dedupeKey).first();
-  if (existing) return;
+  if (await hasFired(dedupeKey)) return;
   await db.notifications.add({ type, title, message, read: false, dedupeKey, createdAt: Date.now() });
+  await markFired(dedupeKey);
 }
 
 async function checkTasks(today) {
