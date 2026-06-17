@@ -28,6 +28,21 @@ db.version(2).stores({
   settings: "key",
 });
 
+// type = 'income' | 'expense', date = 'YYYY-MM-DD'
+db.version(3).stores({
+  habits: "++id, name, frequency, days, reminderTime, color, icon, createdAt",
+  habitLogs: "++id, habitId, date",
+  tasks: "++id, title, dueDate, priority, category, completed, createdAt",
+  goals: "++id, title, targetDate, progress, linkedType, linkedId, targetAmount, createdAt",
+  subjects: "++id, name, icon, color, order",
+  levels: "++id, subjectId, name, order",
+  courses: "++id, levelId, name, description, order",
+  lessons: "++id, courseId, name, status, notes, completedAt, order",
+  studySessions: "++id, lessonId, duration, date",
+  transactions: "++id, type, amount, category, date, createdAt",
+  settings: "key",
+});
+
 // ---------- Seed data (first run only) ----------
 export async function seedIfEmpty() {
   const habitCount = await db.habits.count();
@@ -109,6 +124,16 @@ export async function seedIfEmpty() {
     { courseId: courseIds[2], name: "Async/Await Syntax", status: "not_started", notes: "", completedAt: null, order: 2 },
   ]);
 
+  // Finance: a few sample transactions across the last week
+  await db.transactions.bulkAdd([
+    { type: "income", amount: 5000, category: "Salary", date: fmt(new Date(today.getTime() - 86400000 * 6)), note: "Monthly salary", createdAt: Date.now() },
+    { type: "expense", amount: 250, category: "Groceries", date: fmt(new Date(today.getTime() - 86400000 * 5)), note: "", createdAt: Date.now() },
+    { type: "expense", amount: 80, category: "Transport", date: fmt(new Date(today.getTime() - 86400000 * 3)), note: "", createdAt: Date.now() },
+    { type: "income", amount: 600, category: "Freelance", date: fmt(new Date(today.getTime() - 86400000 * 2)), note: "Small design gig", createdAt: Date.now() },
+    { type: "expense", amount: 150, category: "Food & Drink", date: fmt(new Date(today.getTime() - 86400000)), note: "", createdAt: Date.now() },
+    { type: "expense", amount: 60, category: "Food & Drink", date: fmt(today), note: "", createdAt: Date.now() },
+  ]);
+
   // Settings defaults
   await db.settings.bulkAdd([
     { key: "onboardingComplete", value: false },
@@ -140,6 +165,7 @@ const DATA_TABLES = [
   "courses",
   "lessons",
   "studySessions",
+  "transactions",
   "settings",
 ];
 

@@ -9,6 +9,8 @@ import Dashboard from "./pages/Dashboard";
 import Habits from "./pages/Habits";
 import Tasks from "./pages/Tasks";
 import Goals from "./pages/Goals";
+import Finance from "./pages/Finance";
+import FinanceStats from "./pages/FinanceStats";
 import Learning from "./pages/Learning";
 import CourseDetail from "./pages/CourseDetail";
 import LessonDetail from "./pages/LessonDetail";
@@ -62,6 +64,8 @@ function App() {
         <Route path="/tasks/new" element={<AddEditTask />} />
         <Route path="/tasks/:id/edit" element={<AddEditTask />} />
         <Route path="/goals" element={<Goals />} />
+        <Route path="/finance" element={<Finance />} />
+        <Route path="/stats/finance" element={<FinanceStats />} />
         <Route path="/learning" element={<Learning />} />
         <Route path="/learning/course/:id" element={<CourseDetail />} />
         <Route path="/learning/lesson/:id" element={<LessonDetail />} />

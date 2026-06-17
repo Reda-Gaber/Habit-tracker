@@ -1,6 +1,7 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLiveQuery } from "dexie-react-hooks";
-import { db } from "../db/db";
+import { db, getSetting } from "../db/db";
 import TopAppBar from "../components/TopAppBar";
 import BottomNav from "../components/BottomNav";
 
@@ -20,6 +21,19 @@ export default function Stats() {
   const tasks = useLiveQuery(() => db.tasks.toArray(), []) || [];
   const studySessions = useLiveQuery(() => db.studySessions.toArray(), []) || [];
   const lessons = useLiveQuery(() => db.lessons.toArray(), []) || [];
+  const transactions = useLiveQuery(() => db.transactions.toArray(), []) || [];
+  const [currency, setCurrency] = useState("EGP");
+
+  useEffect(() => {
+    getSetting("financeCurrency", "EGP").then(setCurrency);
+  }, []);
+
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0];
+  const monthTx = transactions.filter((t) => t.date >= monthStart);
+  const monthIncome = monthTx.filter((t) => t.type === "income").reduce((s, t) => s + t.amount, 0);
+  const monthExpense = monthTx.filter((t) => t.type === "expense").reduce((s, t) => s + t.amount, 0);
+  const monthNet = monthIncome - monthExpense;
 
   const habitsCompleted = habitLogs.length;
   const tasksDone = tasks.filter((t) => t.completed).length;
@@ -146,6 +160,20 @@ export default function Stats() {
                 <span className="material-symbols-outlined">schedule</span>
               </div>
             </div>
+          </div>
+          <div onClick={() => navigate("/stats/finance")} className="col-span-2 bg-tertiary-container text-on-tertiary-container p-lg rounded-xl flex items-center justify-between cursor-pointer active:scale-[0.99] transition-transform">
+            <div>
+              <p className="text-label-md opacity-80 uppercase tracking-widest">This Month's Net</p>
+              <p className="text-display-lg mt-xs">
+                {monthNet >= 0 ? "+" : ""}
+                {monthNet} {currency}
+              </p>
+              <p className="text-body-sm opacity-90 mt-xs flex items-center gap-1">
+                View finance stats
+                <span className="material-symbols-outlined text-[16px]">chevron_right</span>
+              </p>
+            </div>
+            <span className="material-symbols-outlined text-4xl">account_balance_wallet</span>
           </div>
         </section>
 

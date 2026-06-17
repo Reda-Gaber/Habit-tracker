@@ -1,7 +1,16 @@
-const LINKED_TYPES = ["lesson", "course", "level", "subject"];
+const LEARNING_LINKED_TYPES = ["lesson", "course", "level", "subject"];
+const FINANCIAL_LINKED_TYPES = ["income", "expense_limit"];
+
+export function isFinancialGoal(goal) {
+  return Boolean(goal?.linkedType && FINANCIAL_LINKED_TYPES.includes(goal.linkedType) && goal?.targetAmount > 0);
+}
+
+export function isLearningLinkedGoal(goal) {
+  return Boolean(goal?.linkedType && goal?.linkedId && LEARNING_LINKED_TYPES.includes(goal.linkedType));
+}
 
 export function isLinkedGoal(goal) {
-  return Boolean(goal?.linkedType && goal?.linkedId && LINKED_TYPES.includes(goal.linkedType));
+  return isLearningLinkedGoal(goal) || isFinancialGoal(goal);
 }
 
 export function getLessonsForLink(linkedType, linkedId, { lessons = [], courses = [], levels = [] }) {
@@ -38,15 +47,60 @@ export function computeLinkedProgress(linkedType, linkedId, learningData) {
   return Math.round((completed / scopedLessons.length) * 100);
 }
 
-export function getGoalProgress(goal, learningData) {
-  if (isLinkedGoal(goal)) {
-    return computeLinkedProgress(goal.linkedType, goal.linkedId, learningData);
+// Transactions that fall inside a goal's tracking window: from the day the
+// goal was created through its target date (inclusive).
+function transactionsInGoalWindow(goal, transactions = []) {
+  const startDate = new Date(goal.createdAt).toISOString().split("T")[0];
+  const endDate = goal.targetDate;
+  return transactions.filter((t) => t.date >= startDate && t.date <= endDate);
+}
+
+// Income goals: progress climbs toward 100% as you earn more.
+// Expense-limit goals: progress STARTS at 100% (full budget left) and falls
+// as you spend, so "higher is still better" stays true for every goal type.
+export function computeFinancialProgress(goal, transactions = []) {
+  if (!goal?.targetAmount) return 0;
+  const inWindow = transactionsInGoalWindow(goal, transactions);
+
+  if (goal.linkedType === "income") {
+    const earned = inWindow.filter((t) => t.type === "income").reduce((sum, t) => sum + t.amount, 0);
+    return Math.min(100, Math.round((earned / goal.targetAmount) * 100));
+  }
+
+  if (goal.linkedType === "expense_limit") {
+    const spent = inWindow.filter((t) => t.type === "expense").reduce((sum, t) => sum + t.amount, 0);
+    const remainingPct = 100 - (spent / goal.targetAmount) * 100;
+    return Math.max(0, Math.round(remainingPct));
+  }
+
+  return 0;
+}
+
+export function getFinancialGoalStats(goal, transactions = []) {
+  if (!isFinancialGoal(goal)) return null;
+  const inWindow = transactionsInGoalWindow(goal, transactions);
+
+  if (goal.linkedType === "income") {
+    const earned = inWindow.filter((t) => t.type === "income").reduce((sum, t) => sum + t.amount, 0);
+    return { kind: "income", current: earned, target: goal.targetAmount, over: false };
+  }
+
+  const spent = inWindow.filter((t) => t.type === "expense").reduce((sum, t) => sum + t.amount, 0);
+  return { kind: "expense_limit", current: spent, target: goal.targetAmount, over: spent > goal.targetAmount };
+}
+
+export function getGoalProgress(goal, data = {}) {
+  if (isFinancialGoal(goal)) {
+    return computeFinancialProgress(goal, data.transactions || []);
+  }
+  if (isLearningLinkedGoal(goal)) {
+    return computeLinkedProgress(goal.linkedType, goal.linkedId, data);
   }
   return goal.progress ?? 0;
 }
 
 export function getLinkedGoalStats(goal, learningData) {
-  if (!isLinkedGoal(goal)) return null;
+  if (!isLearningLinkedGoal(goal)) return null;
 
   const scopedLessons = getLessonsForLink(goal.linkedType, goal.linkedId, learningData);
   const completed = scopedLessons.filter((l) => l.status === "completed").length;
@@ -101,12 +155,24 @@ export function getLinkedGoalLabel(linkedType, linkedId, { subjects = [], levels
   return "";
 }
 
+export function getFinancialGoalLabel(goal, currency = "EGP") {
+  if (goal.linkedType === "income") return `Earn ${goal.targetAmount} ${currency}`;
+  if (goal.linkedType === "expense_limit") return `Max ${goal.targetAmount} ${currency}`;
+  return "";
+}
+
+export function getGoalsLinkedTo(goals, linkedType, linkedId) {
+  return goals.filter((g) => g.linkedType === linkedType && g.linkedId === linkedId);
+}
+
 export function getLinkTypeLabel(linkedType) {
   const labels = {
     lesson: "Lesson",
     course: "Course",
     level: "Level",
     subject: "Subject",
+    income: "Income Goal",
+    expense_limit: "Expense Limit",
   };
   return labels[linkedType] || linkedType;
 }

@@ -2,6 +2,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "../db/db";
 import BottomNav from "../components/BottomNav";
+import LinkedGoalBadge from "../components/LinkedGoalBadge";
 
 const STATUS_STYLES = {
   completed: { icon: "check_circle", classes: "text-tertiary icon-filled" },
@@ -104,6 +105,8 @@ export default function CourseDetail() {
             <div className="h-full bg-primary rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
           </div>
         </section>
+
+        <LinkedGoalBadge linkedType="course" linkedId={courseId} />
 
         {/* Lessons */}
         <section className="flex flex-col gap-md">

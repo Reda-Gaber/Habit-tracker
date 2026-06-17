@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "../db/db";
 import TopAppBar from "../components/TopAppBar";
 import BottomNav from "../components/BottomNav";
 import FAB from "../components/FAB";
+import LinkedGoalBadge from "../components/LinkedGoalBadge";
 import {
   AddLearningMenu,
   AddSubjectSheet,
@@ -15,9 +16,10 @@ import {
 
 export default function Learning() {
   const navigate = useNavigate();
+  const location = useLocation();
   const subjects = useLiveQuery(() => db.subjects.toArray(), []) || [];
-  const [activeSubjectId, setActiveSubjectId] = useState(null);
-  const [activeLevelId, setActiveLevelId] = useState(null);
+  const [activeSubjectId, setActiveSubjectId] = useState(location.state?.subjectId ?? null);
+  const [activeLevelId, setActiveLevelId] = useState(location.state?.levelId ?? null);
   const [activeSheet, setActiveSheet] = useState(null); // null | 'menu' | 'subject' | 'level' | 'course' | 'lesson'
 
   const activeSubject = subjects.find((s) => s.id === (activeSubjectId ?? subjects[0]?.id));
@@ -185,6 +187,8 @@ export default function Learning() {
           </div>
         </section>
 
+        <LinkedGoalBadge linkedType="subject" linkedId={activeSubject.id} />
+
         <nav className="flex items-center gap-sm overflow-x-auto no-scrollbar -mx-container_margin_mobile px-container_margin_mobile">
           {levels.map((level) => {
             const isActive = level.id === (activeLevelId ?? levels[0]?.id);
@@ -217,6 +221,8 @@ export default function Learning() {
             );
           })}
         </nav>
+
+        {currentLevel && <LinkedGoalBadge linkedType="level" linkedId={currentLevel.id} />}
 
         <section className="flex flex-col gap-md">
           <div className="flex justify-between items-end">

@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db, getSetting, setSetting } from "../db/db";
 import BottomNav from "../components/BottomNav";
+import LinkedGoalBadge from "../components/LinkedGoalBadge";
 
 const STATUS_OPTIONS = [
   { key: "not_started", label: "Not Started", icon: "radio_button_unchecked", iconActive: "radio_button_checked" },
@@ -176,6 +177,8 @@ export default function LessonDetail() {
             </div>
           </div>
         </section>
+
+        <LinkedGoalBadge linkedType="lesson" linkedId={lesson.id} />
 
         <div className="grid grid-cols-1 gap-lg">
           {/* Status toggle */}

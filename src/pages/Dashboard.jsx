@@ -32,6 +32,12 @@ export default function Dashboard() {
   const habits = useLiveQuery(() => db.habits.toArray(), []) || [];
   const tasks = useLiveQuery(() => db.tasks.toArray(), []) || [];
   const allLogs = useLiveQuery(() => db.habitLogs.toArray(), []) || [];
+  const transactions = useLiveQuery(() => db.transactions.toArray(), []) || [];
+  const [financeCurrency, setFinanceCurrency] = useState("EGP");
+
+  useEffect(() => {
+    getSetting("financeCurrency", "EGP").then(setFinanceCurrency);
+  }, []);
 
   const today = new Date();
   const todayDow = today.getDay();
@@ -141,7 +147,12 @@ export default function Dashboard() {
   const totalLessonsAll = allLessons.length;
   const completedLessonsAll = allLessons.filter((l) => l.status === "completed").length;
 
-  const learningData = { subjects, levels: allLevels, courses: allCourses, lessons: allLessons };
+  // Finance snapshot
+  const todayIncome = transactions.filter((t) => t.date === todayKey && t.type === "income").reduce((s, t) => s + t.amount, 0);
+  const todayExpense = transactions.filter((t) => t.date === todayKey && t.type === "expense").reduce((s, t) => s + t.amount, 0);
+  const todayNet = todayIncome - todayExpense;
+
+  const learningData = { subjects, levels: allLevels, courses: allCourses, lessons: allLessons, transactions };
   const avgGoalProgress = goals.length
     ? Math.round(goals.reduce((sum, g) => sum + getGoalProgress(g, learningData), 0) / goals.length)
     : 0;
@@ -198,6 +209,27 @@ export default function Dashboard() {
               <span className="material-symbols-outlined text-base">arrow_forward</span>
               <span className="text-label-md">View all tasks</span>
             </div>
+          </div>
+        </section>
+
+        {/* Finance snapshot */}
+        <section
+          onClick={() => navigate("/finance")}
+          className="bento-card relative p-lg flex items-center justify-between cursor-pointer bg-tertiary-container/5 border-tertiary-container/20 overflow-hidden"
+        >
+          <div className="z-10">
+            <span className="text-label-md text-tertiary mb-1 block">Today's Balance</span>
+            <div className="text-headline-lg-mobile">
+              {todayNet >= 0 ? "+" : ""}
+              {todayNet} {financeCurrency}
+            </div>
+            <p className="text-body-sm text-on-surface-variant mt-1">
+              Income {todayIncome} · Expense {todayExpense}
+            </p>
+          </div>
+          <span className="material-symbols-outlined text-tertiary text-[40px] z-10">account_balance_wallet</span>
+          <div className="absolute -right-4 -bottom-4 opacity-5">
+            <span className="material-symbols-outlined text-9xl">payments</span>
           </div>
         </section>
 
@@ -466,6 +498,15 @@ function QuickAddSheet({ onClose }) {
             <span className="material-symbols-outlined">task_alt</span>
           </span>
           <span className="text-body-lg text-on-surface">New Task</span>
+        </button>
+        <button
+          onClick={() => navigate("/finance", { state: { openNew: true } })}
+          className="w-full flex items-center gap-md p-md rounded-xl bg-surface-container-low active:scale-[0.98] transition-transform"
+        >
+          <span className="w-10 h-10 rounded-full bg-tertiary-fixed flex items-center justify-center text-tertiary">
+            <span className="material-symbols-outlined">payments</span>
+          </span>
+          <span className="text-body-lg text-on-surface">New Transaction</span>
         </button>
       </div>
     </div>

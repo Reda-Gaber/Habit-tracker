@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLiveQuery } from "dexie-react-hooks";
-import { db } from "../db/db";
+import { db, getSetting } from "../db/db";
 import TopAppBar from "../components/TopAppBar";
 import BottomNav from "../components/BottomNav";
 import LinkLearningPicker from "../components/LinkLearningPicker";
@@ -11,6 +11,9 @@ import {
   getLinkedGoalStats,
   getLinkTypeLabel,
   isLinkedGoal,
+  isFinancialGoal,
+  getFinancialGoalStats,
+  getFinancialGoalLabel,
 } from "../utils/goalProgress";
 
 function formatTarget(dateStr) {
@@ -35,9 +38,15 @@ export default function Goals() {
   const levels = useLiveQuery(() => db.levels.toArray(), []) || [];
   const courses = useLiveQuery(() => db.courses.toArray(), []) || [];
   const lessons = useLiveQuery(() => db.lessons.toArray(), []) || [];
-  const [showAdd, setShowAdd] = useState(false);
+  const transactions = useLiveQuery(() => db.transactions.toArray(), []) || [];
+  const [activeGoalSheet, setActiveGoalSheet] = useState(null); // null | "new" | goal object being edited
+  const [currency, setCurrency] = useState("EGP");
 
-  const learningData = { subjects, levels, courses, lessons };
+  useEffect(() => {
+    getSetting("financeCurrency", "EGP").then(setCurrency);
+  }, []);
+
+  const learningData = { subjects, levels, courses, lessons, transactions };
   const goalsWithProgress = goals.map((goal) => ({
     ...goal,
     effectiveProgress: getGoalProgress(goal, learningData),
@@ -53,6 +62,23 @@ export default function Goals() {
 
   const tasks = useLiveQuery(() => db.tasks.toArray(), []) || [];
   const completedTasks = tasks.filter((t) => t.completed).length;
+
+  const openLinkedContent = (goal) => {
+    if (isFinancialGoal(goal)) {
+      navigate("/finance");
+      return;
+    }
+    if (goal.linkedType === "lesson") {
+      navigate(`/learning/lesson/${goal.linkedId}`);
+    } else if (goal.linkedType === "course") {
+      navigate(`/learning/course/${goal.linkedId}`);
+    } else if (goal.linkedType === "level") {
+      const level = levels.find((l) => l.id === goal.linkedId);
+      navigate("/learning", { state: { subjectId: level?.subjectId ?? null, levelId: goal.linkedId } });
+    } else if (goal.linkedType === "subject") {
+      navigate("/learning", { state: { subjectId: goal.linkedId } });
+    }
+  };
 
   return (
     <div className="bg-background text-on-background min-h-screen pb-24">
@@ -86,7 +112,9 @@ export default function Goals() {
 
           {goalsWithProgress.map((goal) => {
             const linked = isLinkedGoal(goal);
-            const stats = linked ? getLinkedGoalStats(goal, learningData) : null;
+            const financial = isFinancialGoal(goal);
+            const stats = linked && !financial ? getLinkedGoalStats(goal, learningData) : null;
+            const finStats = financial ? getFinancialGoalStats(goal, transactions) : null;
             const daysLeft = daysUntil(goal.targetDate);
             const deadlineLabel =
               daysLeft > 0 ? `${daysLeft} days left` : daysLeft === 0 ? "Due today" : `${Math.abs(daysLeft)} days overdue`;
@@ -100,7 +128,7 @@ export default function Goals() {
                   <div className="flex items-center gap-md min-w-0">
                     <div className="w-12 h-12 rounded-xl bg-secondary-container/10 flex items-center justify-center text-secondary shrink-0">
                       <span className="material-symbols-outlined text-[28px] icon-filled">
-                        {linked ? "school" : "flag"}
+                        {financial ? (goal.linkedType === "income" ? "savings" : "shield") : linked ? "school" : "flag"}
                       </span>
                     </div>
                     <div className="min-w-0">
@@ -110,7 +138,9 @@ export default function Goals() {
                       </p>
                       {linked && (
                         <p className="text-label-md text-primary truncate mt-0.5">
-                          {getLinkTypeLabel(goal.linkedType)} · {getLinkedGoalLabel(goal.linkedType, goal.linkedId, learningData)}
+                          {financial
+                            ? `${getLinkTypeLabel(goal.linkedType)} · ${getFinancialGoalLabel(goal, currency)}`
+                            : `${getLinkTypeLabel(goal.linkedType)} · ${getLinkedGoalLabel(goal.linkedType, goal.linkedId, learningData)}`}
                         </p>
                       )}
                     </div>
@@ -119,6 +149,13 @@ export default function Goals() {
                     <span className={`text-headline-lg-mobile ${PROGRESS_TEXT(goal.effectiveProgress)}`}>
                       {goal.effectiveProgress}%
                     </span>
+                    <button
+                      onClick={() => setActiveGoalSheet(goal)}
+                      aria-label="Edit goal"
+                      className="text-on-surface-variant hover:text-primary p-1 rounded-full transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-[20px]">edit</span>
+                    </button>
                     <button
                       onClick={() => deleteGoal(goal)}
                       aria-label="Delete goal"
@@ -141,7 +178,11 @@ export default function Goals() {
                         {linked ? "auto_awesome" : "check_circle"}
                       </span>
                       <span className="text-label-md text-on-surface-variant truncate">
-                        {linked
+                        {financial
+                          ? finStats?.kind === "income"
+                            ? `${finStats.current}/${finStats.target} ${currency} saved`
+                            : `${finStats.current}/${finStats.target} ${currency} spent${finStats?.over ? " — over limit" : ""}`
+                          : linked
                           ? stats?.total
                             ? `${stats.completed}/${stats.total} lessons completed`
                             : "No lessons yet"
@@ -157,7 +198,16 @@ export default function Goals() {
                       </button>
                     )}
                     {linked && (
-                      <span className="text-label-md text-on-surface-variant shrink-0">Auto-tracked</span>
+                      <div className="flex items-center gap-sm shrink-0">
+                        <span className="text-label-md text-on-surface-variant">Auto-tracked</span>
+                        <button
+                          onClick={() => openLinkedContent(goal)}
+                          className="text-label-md text-primary hover:underline flex items-center gap-0.5"
+                        >
+                          Open
+                          <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+                        </button>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -190,7 +240,7 @@ export default function Goals() {
         {/* Add New Goal */}
         <section className="pt-lg pb-xl">
           <button
-            onClick={() => setShowAdd(true)}
+            onClick={() => setActiveGoalSheet("new")}
             className="w-full h-16 bg-surface-container-lowest border-2 border-dashed border-outline-variant rounded-xl flex items-center justify-center gap-sm text-on-surface-variant hover:border-primary hover:text-primary transition-all duration-200 active:scale-[0.98]"
           >
             <span className="material-symbols-outlined">add_circle</span>
@@ -199,7 +249,14 @@ export default function Goals() {
         </section>
       </main>
 
-      {showAdd && <AddGoalSheet onClose={() => setShowAdd(false)} />}
+      {activeGoalSheet && (
+        <GoalSheet
+          goal={activeGoalSheet === "new" ? null : activeGoalSheet}
+          learningData={learningData}
+          currency={currency}
+          onClose={() => setActiveGoalSheet(null)}
+        />
+      )}
       <BottomNav />
     </div>
   );
@@ -215,25 +272,54 @@ async function deleteGoal(goal) {
   await db.goals.delete(goal.id);
 }
 
-function AddGoalSheet({ onClose }) {
-  const [title, setTitle] = useState("");
-  const [targetDate, setTargetDate] = useState("");
-  const [link, setLink] = useState(null);
+function GoalSheet({ goal, learningData, currency, onClose }) {
+  const isEdit = !!goal;
+  const [trackingMode, setTrackingMode] = useState(
+    isFinancialGoal(goal) ? "finance" : goal?.linkedType && goal?.linkedId ? "learning" : "manual"
+  );
+  const [title, setTitle] = useState(goal?.title || "");
+  const [targetDate, setTargetDate] = useState(goal?.targetDate || "");
+  const [link, setLink] = useState(
+    goal?.linkedType && goal?.linkedId
+      ? {
+          linkedType: goal.linkedType,
+          linkedId: goal.linkedId,
+          label: getLinkedGoalLabel(goal.linkedType, goal.linkedId, learningData),
+        }
+      : null
+  );
   const [showLinkPicker, setShowLinkPicker] = useState(false);
+  const [financeType, setFinanceType] = useState(goal?.linkedType === "expense_limit" ? "expense_limit" : "income");
+  const [targetAmount, setTargetAmount] = useState(goal?.targetAmount ? String(goal.targetAmount) : "");
 
   const save = async () => {
     if (!title.trim()) return;
+    const fallbackDate = isEdit
+      ? goal.targetDate || new Date(Date.now() + 86400000 * 30).toISOString().split("T")[0]
+      : new Date(Date.now() + 86400000 * 30).toISOString().split("T")[0];
     const payload = {
       title: title.trim(),
-      targetDate: targetDate || new Date(Date.now() + 86400000 * 30).toISOString().split("T")[0],
-      progress: 0,
-      createdAt: Date.now(),
+      targetDate: targetDate || fallbackDate,
+      linkedType: null,
+      linkedId: null,
+      targetAmount: null,
     };
-    if (link) {
+
+    if (trackingMode === "learning" && link) {
       payload.linkedType = link.linkedType;
       payload.linkedId = link.linkedId;
+    } else if (trackingMode === "finance" && Number(targetAmount) > 0) {
+      payload.linkedType = financeType;
+      payload.targetAmount = Number(targetAmount);
     }
-    await db.goals.add(payload);
+
+    if (isEdit) {
+      await db.goals.update(goal.id, payload);
+    } else {
+      payload.progress = 0;
+      payload.createdAt = Date.now();
+      await db.goals.add(payload);
+    }
     onClose();
   };
 
@@ -242,7 +328,7 @@ function AddGoalSheet({ onClose }) {
       <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/30" onClick={onClose}>
         <div className="w-full max-w-md bg-surface rounded-t-2xl p-lg pb-xl space-y-md" onClick={(e) => e.stopPropagation()}>
           <div className="w-12 h-1.5 bg-surface-container-high rounded-full mx-auto mb-md" />
-          <h3 className="text-title-md text-on-surface">New Goal</h3>
+          <h3 className="text-title-md text-on-surface">{isEdit ? "Edit Goal" : "New Goal"}</h3>
           <div className="space-y-sm">
             <label className="text-label-md text-on-surface-variant uppercase tracking-wider">Goal Title</label>
             <input
@@ -264,31 +350,52 @@ function AddGoalSheet({ onClose }) {
 
           <div className="space-y-sm">
             <label className="text-label-md text-on-surface-variant uppercase tracking-wider">Progress Tracking</label>
-            {link ? (
-              <div className="rounded-xl bg-primary-fixed/30 border border-primary/20 p-md space-y-sm">
-                <div className="flex items-start justify-between gap-sm">
-                  <div className="min-w-0">
-                    <p className="text-label-md text-primary">{getLinkTypeLabel(link.linkedType)} goal</p>
-                    <p className="text-body-sm text-on-surface truncate">{link.label}</p>
+
+            <div className="flex gap-sm">
+              {[
+                { key: "manual", label: "Manual" },
+                { key: "learning", label: "Learning" },
+                { key: "finance", label: "Finance" },
+              ].map((m) => (
+                <button
+                  key={m.key}
+                  onClick={() => setTrackingMode(m.key)}
+                  className={`flex-1 py-2 rounded-xl text-label-md transition-all ${
+                    trackingMode === m.key
+                      ? "bg-primary text-on-primary"
+                      : "bg-surface-container-lowest border border-outline-variant text-on-surface-variant"
+                  }`}
+                >
+                  {m.label}
+                </button>
+              ))}
+            </div>
+
+            {trackingMode === "manual" && (
+              <p className="text-body-sm text-on-surface-variant">Update progress yourself with +10% steps.</p>
+            )}
+
+            {trackingMode === "learning" &&
+              (link ? (
+                <div className="rounded-xl bg-primary-fixed/30 border border-primary/20 p-md space-y-sm">
+                  <div className="flex items-start justify-between gap-sm">
+                    <div className="min-w-0">
+                      <p className="text-label-md text-primary">{getLinkTypeLabel(link.linkedType)} goal</p>
+                      <p className="text-body-sm text-on-surface truncate">{link.label}</p>
+                    </div>
+                    <button
+                      onClick={() => setLink(null)}
+                      className="text-on-surface-variant hover:text-error shrink-0"
+                      aria-label="Remove learning link"
+                    >
+                      <span className="material-symbols-outlined text-[20px]">close</span>
+                    </button>
                   </div>
-                  <button
-                    onClick={() => setLink(null)}
-                    className="text-on-surface-variant hover:text-error shrink-0"
-                    aria-label="Remove learning link"
-                  >
-                    <span className="material-symbols-outlined text-[20px]">close</span>
+                  <button onClick={() => setShowLinkPicker(true)} className="text-primary text-label-md hover:underline">
+                    Change link
                   </button>
                 </div>
-                <button
-                  onClick={() => setShowLinkPicker(true)}
-                  className="text-primary text-label-md hover:underline"
-                >
-                  Change link
-                </button>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-sm">
-                <p className="text-body-sm text-on-surface-variant">Manual — update progress yourself with +10% steps.</p>
+              ) : (
                 <button
                   onClick={() => setShowLinkPicker(true)}
                   className="w-full py-3 px-lg rounded-xl border border-outline-variant bg-surface-container-lowest text-on-surface flex items-center justify-center gap-sm hover:border-primary hover:text-primary transition-all"
@@ -296,6 +403,46 @@ function AddGoalSheet({ onClose }) {
                   <span className="material-symbols-outlined">link</span>
                   Link to Learning
                 </button>
+              ))}
+
+            {trackingMode === "finance" && (
+              <div className="space-y-sm">
+                <div className="flex gap-sm">
+                  <button
+                    onClick={() => setFinanceType("income")}
+                    className={`flex-1 py-2 rounded-xl text-label-md transition-all flex items-center justify-center gap-1 ${
+                      financeType === "income"
+                        ? "bg-tertiary-fixed text-on-tertiary-fixed-variant ring-2 ring-tertiary"
+                        : "bg-surface-container-lowest border border-outline-variant text-on-surface-variant"
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-[18px]">savings</span>
+                    Income Target
+                  </button>
+                  <button
+                    onClick={() => setFinanceType("expense_limit")}
+                    className={`flex-1 py-2 rounded-xl text-label-md transition-all flex items-center justify-center gap-1 ${
+                      financeType === "expense_limit"
+                        ? "bg-secondary-container text-on-secondary-container ring-2 ring-secondary"
+                        : "bg-surface-container-lowest border border-outline-variant text-on-surface-variant"
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-[18px]">shield</span>
+                    Expense Limit
+                  </button>
+                </div>
+                <input
+                  type="number"
+                  value={targetAmount}
+                  onChange={(e) => setTargetAmount(e.target.value)}
+                  placeholder={`Target amount (${currency})`}
+                  className="w-full px-lg py-4 bg-surface-container-lowest border border-outline-variant rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all text-body-lg placeholder:text-outline outline-none"
+                />
+                <p className="text-body-sm text-on-surface-variant">
+                  {financeType === "income"
+                    ? "Tracks income you log between now and the target date."
+                    : "Tracks expenses you log between now and the target date — 100% means you're still fully within budget."}
+                </p>
               </div>
             )}
           </div>
@@ -305,7 +452,7 @@ function AddGoalSheet({ onClose }) {
             className="w-full py-4 px-lg rounded-full text-title-md text-on-primary bg-primary active:scale-[0.98] transition-all flex items-center justify-center gap-sm shadow-lg"
           >
             <span className="material-symbols-outlined icon-filled">check_circle</span>
-            Save Goal
+            {isEdit ? "Save Changes" : "Save Goal"}
           </button>
         </div>
       </div>
