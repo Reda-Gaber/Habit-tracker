@@ -105,8 +105,6 @@ export default function Dashboard() {
   const allLessons = useLiveQuery(() => db.lessons.toArray(), []) || [];
   const studySessions = useLiveQuery(() => db.studySessions.toArray(), []) || [];
 
-  const totalFocusMinutes = studySessions.reduce((sum, s) => sum + (s.duration || 0), 0);
-
   // Weekly focus time comparison
   const lastWeekStart = new Date(weekStart);
   lastWeekStart.setDate(lastWeekStart.getDate() - 7);
@@ -169,9 +167,10 @@ export default function Dashboard() {
 
   const greeting = (() => {
     const h = today.getHours();
-    if (h < 12) return "Good Morning";
-    if (h < 18) return "Good Afternoon";
-    return "Good Evening";
+    const name = userName && userName !== "there" ? `, ${userName}` : "";
+    if (h < 12) return `Good Morning${name}`;
+    if (h < 18) return `Good Afternoon${name}`;
+    return `Good Evening${name}`;
   })();
 
   return (

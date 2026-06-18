@@ -76,7 +76,7 @@ export default function NotificationSettings() {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
       setBackupStatus({ type: "success", message: "Backup file downloaded." });
-    } catch (err) {
+    } catch {
       setBackupStatus({ type: "error", message: "Could not create backup file." });
     }
   };
@@ -100,7 +100,7 @@ export default function NotificationSettings() {
       await importAllData(json);
       setBackupStatus({ type: "success", message: "Data restored successfully. Reloading..." });
       setTimeout(() => window.location.reload(), 1200);
-    } catch (err) {
+    } catch {
       setBackupStatus({ type: "error", message: "Invalid or corrupted backup file." });
     } finally {
       e.target.value = "";

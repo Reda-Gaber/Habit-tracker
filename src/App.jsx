@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
-import { db, seedIfEmpty, getSetting } from "./db/db";
+import { seedIfEmpty, getSetting } from "./db/db";
 import { runNotificationChecks } from "./utils/notifications";
+import { runRecurringTransactions } from "./utils/recurringEngine";
 import { useTheme } from "./utils/theme";
 
 import Onboarding from "./pages/Onboarding";
@@ -40,6 +41,13 @@ function App() {
   useEffect(() => {
     runNotificationChecks();
     const interval = setInterval(runNotificationChecks, 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Generate due recurring transactions (salary, rent, subscriptions...)
+  useEffect(() => {
+    runRecurringTransactions();
+    const interval = setInterval(runRecurringTransactions, 60 * 1000);
     return () => clearInterval(interval);
   }, []);
 
