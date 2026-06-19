@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "../db/db";
@@ -37,6 +38,22 @@ export default function CourseDetail() {
 
   const completed = lessons.filter((l) => l.status === "completed").length;
   const pct = lessons.length ? Math.round((completed / lessons.length) * 100) : 0;
+
+  const [editingName, setEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState("");
+
+  const startEditingName = () => {
+    setNameDraft(course.name);
+    setEditingName(true);
+  };
+
+  const saveCourseName = async () => {
+    const trimmed = nameDraft.trim();
+    if (trimmed && trimmed !== course.name) {
+      await db.courses.update(course.id, { name: trimmed });
+    }
+    setEditingName(false);
+  };
 
   const deleteCourse = async () => {
     if (!confirm(`Delete course "${course.name}" and all its lessons? This cannot be undone.`)) return;
@@ -91,7 +108,34 @@ export default function CourseDetail() {
               </span>
             </div>
           )}
-          <h1 className="text-headline-lg-mobile text-on-surface mb-1">{course.name}</h1>
+          {editingName ? (
+            <div className="flex items-center gap-2 mb-1">
+              <input
+                autoFocus
+                value={nameDraft}
+                onChange={(e) => setNameDraft(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && saveCourseName()}
+                className="flex-1 text-headline-lg-mobile text-on-surface bg-surface-container-low rounded-lg px-3 py-1 outline-none ring-2 ring-primary"
+              />
+              <button onClick={saveCourseName} aria-label="Save course name" className="text-on-primary bg-primary rounded-full p-1.5">
+                <span className="material-symbols-outlined text-[20px]">check</span>
+              </button>
+              <button
+                onClick={() => setEditingName(false)}
+                aria-label="Cancel"
+                className="text-on-surface-variant bg-surface-container-high rounded-full p-1.5"
+              >
+                <span className="material-symbols-outlined text-[20px]">close</span>
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 mb-1">
+              <h1 className="text-headline-lg-mobile text-on-surface">{course.name}</h1>
+              <button onClick={startEditingName} aria-label="Edit course name" className="text-on-surface-variant hover:text-primary">
+                <span className="material-symbols-outlined text-[20px]">edit</span>
+              </button>
+            </div>
+          )}
           {course.description && (
             <p className="text-on-surface-variant text-body-sm mb-md">{course.description}</p>
           )}

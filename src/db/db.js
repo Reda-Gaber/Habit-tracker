@@ -78,6 +78,25 @@ db.version(5).stores({
   settings: "key",
 });
 
+// Daily journal entries. mood = 'great' | 'good' | 'okay' | 'bad' | 'awful'.
+// One entry per date (date is the natural key for lookups, not unique-enforced).
+db.version(6).stores({
+  habits: "++id, name, frequency, days, reminderTime, color, icon, createdAt",
+  habitLogs: "++id, habitId, date",
+  tasks: "++id, title, dueDate, priority, category, completed, createdAt",
+  goals: "++id, title, targetDate, progress, linkedType, linkedId, targetAmount, createdAt",
+  subjects: "++id, name, icon, color, order",
+  levels: "++id, subjectId, name, order",
+  courses: "++id, levelId, name, description, order",
+  lessons: "++id, courseId, name, status, notes, completedAt, order",
+  studySessions: "++id, lessonId, duration, date",
+  transactions: "++id, type, amount, category, date, createdAt",
+  notifications: "++id, dedupeKey, createdAt",
+  recurringTransactions: "++id, active, createdAt",
+  journalEntries: "++id, date, createdAt",
+  settings: "key",
+});
+
 // ---------- Seed data (first run only) ----------
 export async function seedIfEmpty() {
   const habitCount = await db.habits.count();
@@ -211,6 +230,12 @@ export async function seedIfEmpty() {
     createdAt: Date.now(),
   });
 
+  // Sample journal entries
+  await db.journalEntries.bulkAdd([
+    { date: fmt(new Date(today.getTime() - 86400000)), mood: "good", text: "Solid day — finished the grammar lesson and went for a run.", createdAt: Date.now() - 86400000 },
+    { date: fmt(today), mood: "great", text: "Feeling productive. Shipped the finance section of the app.", createdAt: Date.now() },
+  ]);
+
   // Settings defaults
   await db.settings.bulkAdd([
     { key: "onboardingComplete", value: false },
@@ -245,6 +270,7 @@ const DATA_TABLES = [
   "transactions",
   "notifications",
   "recurringTransactions",
+  "journalEntries",
   "settings",
 ];
 

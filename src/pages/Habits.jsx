@@ -138,7 +138,7 @@ export default function Habits() {
             return (
               <div
                 key={habit.id}
-                onClick={() => navigate(`/habits/${habit.id}/edit`)}
+                onClick={() => navigate(`/habits/${habit.id}`)}
                 className="rounded-xl p-md flex items-center gap-md shadow-card border border-outline-variant/30 bg-surface-container-lowest group cursor-pointer"
               >
                 <div className={`w-12 h-12 rounded-xl ${colors.bg} flex items-center justify-center ${colors.text} transition-transform group-active:scale-95`}>

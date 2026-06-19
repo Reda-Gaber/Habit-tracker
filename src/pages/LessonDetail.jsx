@@ -29,6 +29,8 @@ export default function LessonDetail() {
   const [notes, setNotes] = useState("");
   const [elapsedSec, setElapsedSec] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState("");
   const intervalRef = useRef(null);
   const timerKey = `stopwatch_lesson_${lessonId}`;
 
@@ -92,6 +94,19 @@ export default function LessonDetail() {
       status,
       completedAt: status === "completed" ? Date.now() : lesson.completedAt,
     });
+  };
+
+  const startEditingName = () => {
+    setNameDraft(lesson.name);
+    setEditingName(true);
+  };
+
+  const saveLessonName = async () => {
+    const trimmed = nameDraft.trim();
+    if (trimmed && trimmed !== lesson.name) {
+      await db.lessons.update(lesson.id, { name: trimmed });
+    }
+    setEditingName(false);
   };
 
   const saveNotes = async (val) => {
@@ -168,7 +183,34 @@ export default function LessonDetail() {
             <span className="bg-primary-container text-on-primary-container text-label-md px-3 py-1 rounded-full mb-2 inline-block">
               {course.name}
             </span>
-            <h1 className="text-headline-lg-mobile text-white mb-2">{lesson.name}</h1>
+            {editingName ? (
+              <div className="flex items-center gap-2 mb-2">
+                <input
+                  autoFocus
+                  value={nameDraft}
+                  onChange={(e) => setNameDraft(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && saveLessonName()}
+                  className="flex-1 text-headline-lg-mobile text-on-surface bg-surface rounded-lg px-3 py-1 outline-none ring-2 ring-primary"
+                />
+                <button onClick={saveLessonName} aria-label="Save lesson name" className="text-white bg-primary rounded-full p-1.5">
+                  <span className="material-symbols-outlined text-[20px]">check</span>
+                </button>
+                <button
+                  onClick={() => setEditingName(false)}
+                  aria-label="Cancel"
+                  className="text-white bg-black/30 rounded-full p-1.5"
+                >
+                  <span className="material-symbols-outlined text-[20px]">close</span>
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 mb-2">
+                <h1 className="text-headline-lg-mobile text-white">{lesson.name}</h1>
+                <button onClick={startEditingName} aria-label="Edit lesson name" className="text-white/80 hover:text-white">
+                  <span className="material-symbols-outlined text-[20px]">edit</span>
+                </button>
+              </div>
+            )}
             <div className="flex items-center gap-4 text-white/80">
               <div className="flex items-center gap-1">
                 <span className="material-symbols-outlined text-[18px]">timer</span>

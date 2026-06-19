@@ -8,6 +8,7 @@ import { useTheme } from "./utils/theme";
 import Onboarding from "./pages/Onboarding";
 import Dashboard from "./pages/Dashboard";
 import Habits from "./pages/Habits";
+import HabitDetail from "./pages/HabitDetail";
 import Tasks from "./pages/Tasks";
 import Goals from "./pages/Goals";
 import Finance from "./pages/Finance";
@@ -22,6 +23,9 @@ import AddEditTask from "./pages/AddEditTask";
 import NotificationSettings from "./pages/NotificationSettings";
 import Notifications from "./pages/Notifications";
 import NotificationToastHost from "./components/NotificationToastHost";
+import Today from "./pages/Today";
+import Journal from "./pages/Journal";
+import Calendar from "./pages/Calendar";
 
 function App() {
   const [ready, setReady] = useState(false);
@@ -71,6 +75,7 @@ function App() {
         <Route path="/habits" element={<Habits />} />
         <Route path="/habits/new" element={<AddEditHabit />} />
         <Route path="/habits/:id/edit" element={<AddEditHabit />} />
+        <Route path="/habits/:id" element={<HabitDetail />} />
         <Route path="/tasks" element={<Tasks />} />
         <Route path="/tasks/new" element={<AddEditTask />} />
         <Route path="/tasks/:id/edit" element={<AddEditTask />} />
@@ -84,6 +89,9 @@ function App() {
         <Route path="/stats/focus-time" element={<FocusTime />} />
         <Route path="/settings/notifications" element={<NotificationSettings />} />
         <Route path="/notifications" element={<Notifications />} />
+        <Route path="/today" element={<Today />} />
+        <Route path="/journal" element={<Journal />} />
+        <Route path="/calendar" element={<Calendar />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </HashRouter>

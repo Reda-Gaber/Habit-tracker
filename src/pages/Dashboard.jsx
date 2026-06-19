@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db, getSetting } from "../db/db";
 import { getGoalProgress } from "../utils/goalProgress";
+import { computeTotalPoints, getLevelInfo } from "../utils/points";
 import TopAppBar from "../components/TopAppBar";
 import BottomNav from "../components/BottomNav";
 import FAB from "../components/FAB";
@@ -32,6 +33,7 @@ export default function Dashboard() {
   const habits = useLiveQuery(() => db.habits.toArray(), []) || [];
   const tasks = useLiveQuery(() => db.tasks.toArray(), []) || [];
   const allLogs = useLiveQuery(() => db.habitLogs.toArray(), []) || [];
+  const studySessions = useLiveQuery(() => db.studySessions.toArray(), []) || [];
   const transactions = useLiveQuery(() => db.transactions.toArray(), []) || [];
   const [financeCurrency, setFinanceCurrency] = useState("EGP");
 
@@ -65,16 +67,28 @@ export default function Dashboard() {
   const weeklyCompletionByDay = weekDates.map((dateStr) => {
     const d = new Date(dateStr);
     const dow = d.getDay();
-    const expected = habits.filter((h) => h.days?.includes(dow)).length;
-    if (expected === 0) return null; // no habits scheduled
-    const done = allLogs.filter(
+    const scheduledHabits = habits.filter((h) => h.days?.includes(dow));
+    const doneHabits = allLogs.filter(
       (l) => l.date === dateStr && habits.some((h) => h.id === l.habitId && h.days?.includes(dow))
     ).length;
-    return { dateStr, done, expected, complete: done >= expected && expected > 0 };
+    const hasStudy = studySessions.some((s) => s.date === dateStr);
+    const hasCompletedTask = tasks.some((t) => t.completed && t.dueDate === dateStr);
+    const hasAnyActivity = doneHabits > 0 || hasStudy || hasCompletedTask;
+
+    return {
+      dateStr,
+      done: doneHabits,
+      expected: scheduledHabits.length,
+      // The dot lights up for ANY activity that day (habit, study session, or
+      // completed task) — not just habits — so studying still shows progress.
+      complete: scheduledHabits.length > 0 ? doneHabits >= scheduledHabits.length : hasAnyActivity,
+    };
   });
 
-  const totalExpected = weeklyCompletionByDay.reduce((sum, d) => sum + (d?.expected || 0), 0);
-  const totalDone = weeklyCompletionByDay.reduce((sum, d) => sum + (d?.done || 0), 0);
+  // Habit Consistency ring stays habit-only (that's what it's labeled as);
+  // days with zero scheduled habits simply don't contribute to it.
+  const totalExpected = weeklyCompletionByDay.reduce((sum, d) => sum + (d.expected || 0), 0);
+  const totalDone = weeklyCompletionByDay.reduce((sum, d) => sum + (d.done || 0), 0);
   const weeklyPct = totalExpected ? Math.round((totalDone / totalExpected) * 100) : 0;
 
   const circumference = 2 * Math.PI * 32;
@@ -103,7 +117,6 @@ export default function Dashboard() {
   const allLevels = useLiveQuery(() => db.levels.toArray(), []) || [];
   const allCourses = useLiveQuery(() => db.courses.toArray(), []) || [];
   const allLessons = useLiveQuery(() => db.lessons.toArray(), []) || [];
-  const studySessions = useLiveQuery(() => db.studySessions.toArray(), []) || [];
 
   // Weekly focus time comparison
   const lastWeekStart = new Date(weekStart);
@@ -159,6 +172,16 @@ export default function Dashboard() {
     effectiveProgress: getGoalProgress(goal, learningData),
   }));
 
+  const totalPoints = computeTotalPoints({
+    habitLogs: allLogs,
+    tasks,
+    lessons: allLessons,
+    studySessions,
+    goals,
+    goalProgressFn: (g) => getGoalProgress(g, learningData),
+  });
+  const levelInfo = getLevelInfo(totalPoints);
+
   const todayLabel = today.toLocaleDateString("en-US", {
     weekday: "long",
     month: "short",
@@ -178,6 +201,43 @@ export default function Dashboard() {
       <TopAppBar title={greeting} subtitle={todayLabel} showProfile />
 
       <main className="pt-20 px-container_margin_mobile max-w-2xl mx-auto space-y-xl">
+        {/* Level banner */}
+        <section
+          onClick={() => navigate("/stats")}
+          className="bento-card p-md flex items-center gap-md cursor-pointer bg-primary/5 border-primary/15"
+        >
+          <div className="w-12 h-12 rounded-full bg-primary text-on-primary flex items-center justify-center shrink-0 relative">
+            <span className="text-title-md font-bold">{levelInfo.level}</span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-body-sm text-on-surface font-semibold">{levelInfo.title}</span>
+              <span className="text-label-md text-on-surface-variant shrink-0">
+                {levelInfo.points} pts{levelInfo.next ? ` · ${levelInfo.pointsToNext} to next` : ""}
+              </span>
+            </div>
+            <div className="w-full h-1.5 bg-surface-container rounded-full overflow-hidden">
+              <div className="h-full bg-primary rounded-full" style={{ width: `${levelInfo.progressPct}%` }} />
+            </div>
+          </div>
+        </section>
+
+        {/* Quick links: Today / Calendar / Journal */}
+        <section className="grid grid-cols-3 gap-sm">
+          <div onClick={() => navigate("/today")} className="bento-card p-md flex flex-col items-center gap-1 cursor-pointer">
+            <span className="material-symbols-outlined text-primary icon-filled">today</span>
+            <span className="text-label-md text-on-surface-variant text-center">Today</span>
+          </div>
+          <div onClick={() => navigate("/calendar")} className="bento-card p-md flex flex-col items-center gap-1 cursor-pointer">
+            <span className="material-symbols-outlined text-secondary icon-filled">calendar_month</span>
+            <span className="text-label-md text-on-surface-variant text-center">Calendar</span>
+          </div>
+          <div onClick={() => navigate("/journal")} className="bento-card p-md flex flex-col items-center gap-1 cursor-pointer">
+            <span className="material-symbols-outlined text-tertiary icon-filled">auto_stories</span>
+            <span className="text-label-md text-on-surface-variant text-center">Journal</span>
+          </div>
+        </section>
+
         {/* Top Cards */}
         <section className="grid grid-cols-2 gap-md">
           <div
@@ -506,6 +566,15 @@ function QuickAddSheet({ onClose }) {
             <span className="material-symbols-outlined">payments</span>
           </span>
           <span className="text-body-lg text-on-surface">New Transaction</span>
+        </button>
+        <button
+          onClick={() => navigate("/journal")}
+          className="w-full flex items-center gap-md p-md rounded-xl bg-surface-container-low active:scale-[0.98] transition-transform"
+        >
+          <span className="w-10 h-10 rounded-full bg-secondary-fixed flex items-center justify-center text-secondary">
+            <span className="material-symbols-outlined">edit_note</span>
+          </span>
+          <span className="text-body-lg text-on-surface">Journal Entry</span>
         </button>
       </div>
     </div>

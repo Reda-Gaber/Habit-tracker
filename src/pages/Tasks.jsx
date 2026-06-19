@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "../db/db";
@@ -46,15 +47,41 @@ function formatTime(t) {
 export default function Tasks() {
   const navigate = useNavigate();
   const tasks = useLiveQuery(() => db.tasks.toArray(), []) || [];
+  const [showFilters, setShowFilters] = useState(false);
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [priorityFilter, setPriorityFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("active"); // active | completed | all
+
+  const allCategories = [...new Set(tasks.map((t) => t.category).filter(Boolean))];
+
+  const matchesFilters = (t) => {
+    if (categoryFilter !== "all" && t.category !== categoryFilter) return false;
+    if (priorityFilter !== "all" && t.priority !== priorityFilter) return false;
+    if (statusFilter === "active" && t.completed) return false;
+    if (statusFilter === "completed" && !t.completed) return false;
+    return true;
+  };
+
+  const activeFilterCount =
+    (categoryFilter !== "all" ? 1 : 0) + (priorityFilter !== "all" ? 1 : 0) + (statusFilter !== "active" ? 1 : 0);
 
   const todayKey = todayStr();
-  const todayTasks = tasks.filter((t) => t.dueDate === todayKey || (t.dueDate < todayKey && !t.completed));
+  const todayTasks = tasks
+    .filter((t) => t.dueDate === todayKey || (t.dueDate < todayKey && !t.completed))
+    .filter(matchesFilters);
   const upcomingTasks = tasks
     .filter((t) => t.dueDate > todayKey)
+    .filter(matchesFilters)
     .sort((a, b) => (a.dueDate > b.dueDate ? 1 : -1));
 
   const toggleComplete = async (task) => {
     await db.tasks.update(task.id, { completed: !task.completed });
+  };
+
+  const resetFilters = () => {
+    setCategoryFilter("all");
+    setPriorityFilter("all");
+    setStatusFilter("active");
   };
 
   return (
@@ -62,6 +89,27 @@ export default function Tasks() {
       <TopAppBar title="Task Manager" showProfile />
 
       <main className="flex-grow pt-24 pb-32 px-container_margin_mobile max-w-2xl mx-auto w-full">
+        {/* Filter bar */}
+        <div className="flex items-center gap-sm mb-lg">
+          <button
+            onClick={() => setShowFilters(true)}
+            className="relative flex items-center gap-1 px-md py-2 rounded-full bg-surface-container-lowest border border-outline-variant text-on-surface-variant hover:border-primary hover:text-primary transition-colors"
+          >
+            <span className="material-symbols-outlined text-[18px]">filter_list</span>
+            <span className="text-label-md">Filters</span>
+            {activeFilterCount > 0 && (
+              <span className="ml-1 w-5 h-5 rounded-full bg-primary text-on-primary text-[11px] flex items-center justify-center">
+                {activeFilterCount}
+              </span>
+            )}
+          </button>
+          {activeFilterCount > 0 && (
+            <button onClick={resetFilters} className="text-label-md text-on-surface-variant hover:text-error">
+              Clear
+            </button>
+          )}
+        </div>
+
         {/* Today Section */}
         <section className="mb-xl">
           <div className="flex justify-between items-end mb-md">
@@ -73,7 +121,7 @@ export default function Tasks() {
           <div className="space-y-md">
             {todayTasks.length === 0 && (
               <div className="text-center py-lg text-on-surface-variant text-body-sm">
-                Nothing due today. Enjoy the calm!
+                {activeFilterCount > 0 ? "No tasks match your filters." : "Nothing due today. Enjoy the calm!"}
               </div>
             )}
             {todayTasks.map((task) => (
@@ -93,7 +141,7 @@ export default function Tasks() {
           <div className="space-y-md">
             {upcomingTasks.length === 0 && (
               <div className="text-center py-lg text-on-surface-variant text-body-sm">
-                No upcoming tasks scheduled.
+                {activeFilterCount > 0 ? "No tasks match your filters." : "No upcoming tasks scheduled."}
               </div>
             )}
             {upcomingTasks.map((task) => (
@@ -125,6 +173,120 @@ export default function Tasks() {
 
       <FAB onClick={() => navigate("/tasks/new")} />
       <BottomNav />
+
+      {showFilters && (
+        <FilterSheet
+          categories={allCategories}
+          categoryFilter={categoryFilter}
+          priorityFilter={priorityFilter}
+          statusFilter={statusFilter}
+          setCategoryFilter={setCategoryFilter}
+          setPriorityFilter={setPriorityFilter}
+          setStatusFilter={setStatusFilter}
+          onClose={() => setShowFilters(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+function FilterSheet({
+  categories,
+  categoryFilter,
+  priorityFilter,
+  statusFilter,
+  setCategoryFilter,
+  setPriorityFilter,
+  setStatusFilter,
+  onClose,
+}) {
+  return (
+    <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/30" onClick={onClose}>
+      <div className="w-full max-w-md bg-surface rounded-t-2xl p-lg pb-xl space-y-lg" onClick={(e) => e.stopPropagation()}>
+        <div className="w-12 h-1.5 bg-surface-container-high rounded-full mx-auto mb-md" />
+        <h3 className="text-title-md text-on-surface">Filter Tasks</h3>
+
+        <div className="space-y-sm">
+          <label className="text-label-md text-on-surface-variant uppercase tracking-wider">Status</label>
+          <div className="flex gap-sm">
+            {[
+              { key: "active", label: "Active" },
+              { key: "completed", label: "Completed" },
+              { key: "all", label: "All" },
+            ].map((s) => (
+              <button
+                key={s.key}
+                onClick={() => setStatusFilter(s.key)}
+                className={`flex-1 py-2 rounded-xl text-label-md transition-all ${
+                  statusFilter === s.key
+                    ? "bg-primary text-on-primary"
+                    : "bg-surface-container-lowest border border-outline-variant text-on-surface-variant"
+                }`}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-sm">
+          <label className="text-label-md text-on-surface-variant uppercase tracking-wider">Priority</label>
+          <div className="flex gap-sm">
+            {["all", "high", "medium", "low"].map((p) => (
+              <button
+                key={p}
+                onClick={() => setPriorityFilter(p)}
+                className={`flex-1 py-2 rounded-xl text-label-md capitalize transition-all ${
+                  priorityFilter === p
+                    ? "bg-primary text-on-primary"
+                    : "bg-surface-container-lowest border border-outline-variant text-on-surface-variant"
+                }`}
+              >
+                {p === "all" ? "All" : p}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {categories.length > 0 && (
+          <div className="space-y-sm">
+            <label className="text-label-md text-on-surface-variant uppercase tracking-wider">Category</label>
+            <div className="flex gap-sm flex-wrap">
+              <button
+                onClick={() => setCategoryFilter("all")}
+                className={`px-lg py-2 rounded-full text-label-md transition-all ${
+                  categoryFilter === "all"
+                    ? "bg-primary-container text-on-primary-container"
+                    : "bg-surface-container-lowest border border-outline-variant text-on-surface-variant"
+                }`}
+              >
+                All
+              </button>
+              {categories.map((c) => (
+                <button
+                  key={c}
+                  onClick={() => setCategoryFilter(c)}
+                  className={`px-lg py-2 rounded-full text-label-md transition-all ${
+                    categoryFilter === c
+                      ? "bg-primary-container text-on-primary-container"
+                      : "bg-surface-container-lowest border border-outline-variant text-on-surface-variant"
+                  }`}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <button
+          onClick={onClose}
+          className="w-full py-4 px-lg rounded-full text-title-md text-on-primary bg-primary active:scale-[0.98] transition-all flex items-center justify-center gap-sm shadow-lg"
+        >
+          <span className="material-symbols-outlined icon-filled">check_circle</span>
+          Apply
+        </button>
+      </div>
     </div>
   );
 }

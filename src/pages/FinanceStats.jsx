@@ -65,6 +65,22 @@ export default function FinanceStats() {
   );
   const maxDaily = Math.max(...dailyExpense, 1);
 
+  // Monthly trend: last 6 months, income vs expense
+  const monthlyTrend = Array.from({ length: 6 }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
+    const monthStartStr = d.toISOString().split("T")[0];
+    const nextMonth = new Date(d.getFullYear(), d.getMonth() + 1, 1).toISOString().split("T")[0];
+    const monthTx = transactions.filter((t) => t.date >= monthStartStr && t.date < nextMonth);
+    return {
+      label: d.toLocaleDateString("en-US", { month: "short" }),
+      income: monthTx.filter((t) => t.type === "income").reduce((s, t) => s + t.amount, 0),
+      expense: monthTx.filter((t) => t.type === "expense").reduce((s, t) => s + t.amount, 0),
+      isCurrent: d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear(),
+    };
+  });
+  const maxMonthly = Math.max(...monthlyTrend.flatMap((m) => [m.income, m.expense]), 1);
+  const hasMonthlyData = monthlyTrend.some((m) => m.income > 0 || m.expense > 0);
+
   return (
     <div className="bg-background text-on-background min-h-screen pb-24">
       <header className="bg-surface sticky top-0 z-40 flex justify-between items-center w-full px-container_margin_mobile h-16">
@@ -113,6 +129,49 @@ export default function FinanceStats() {
               </span>
             )}
           </div>
+        </section>
+
+        {/* Monthly trend */}
+        <section className="bg-surface-container-lowest p-lg rounded-xl border border-outline-variant shadow-card">
+          <div className="flex items-center justify-between mb-lg">
+            <h2 className="text-title-md text-on-surface">Monthly Trend · Last 6 Months</h2>
+            <div className="flex items-center gap-md text-label-md text-on-surface-variant">
+              <span className="flex items-center gap-1">
+                <span className="w-2.5 h-2.5 rounded-full bg-tertiary inline-block" />
+                Income
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="w-2.5 h-2.5 rounded-full bg-error inline-block" />
+                Expense
+              </span>
+            </div>
+          </div>
+
+          {!hasMonthlyData && (
+            <p className="text-center text-on-surface-variant text-body-sm py-lg">No transactions logged yet.</p>
+          )}
+
+          {hasMonthlyData && (
+            <div className="h-44 flex items-end justify-between gap-md px-sm">
+              {monthlyTrend.map((m, i) => (
+                <div key={i} className="flex-1 flex flex-col items-center gap-sm">
+                  <div className="w-full flex items-end justify-center gap-1 h-full">
+                    <div
+                      className="flex-1 max-w-[14px] rounded-t-sm bg-tertiary"
+                      style={{ height: `${Math.max(m.income > 0 ? 4 : 0, (m.income / maxMonthly) * 100)}%` }}
+                    />
+                    <div
+                      className="flex-1 max-w-[14px] rounded-t-sm bg-error"
+                      style={{ height: `${Math.max(m.expense > 0 ? 4 : 0, (m.expense / maxMonthly) * 100)}%` }}
+                    />
+                  </div>
+                  <span className={`text-label-md ${m.isCurrent ? "text-primary font-bold" : "text-on-surface-variant"}`}>
+                    {m.label}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </section>
 
         {/* 7-day spending trend */}
