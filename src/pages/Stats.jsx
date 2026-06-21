@@ -4,6 +4,7 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { db, getSetting } from "../db/db";
 import TopAppBar from "../components/TopAppBar";
 import BottomNav from "../components/BottomNav";
+import { useLanguage } from "../utils/language";
 
 const DAY_LABELS = ["S", "M", "T", "W", "T", "F", "S"];
 
@@ -16,6 +17,7 @@ function startOfWeek(date) {
 
 export default function Stats() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const habits = useLiveQuery(() => db.habits.toArray(), []) || [];
   const habitLogs = useLiveQuery(() => db.habitLogs.toArray(), []) || [];
   const tasks = useLiveQuery(() => db.tasks.toArray(), []) || [];
@@ -78,32 +80,32 @@ export default function Stats() {
 
   const achievements = [
     {
-      title: "Early Bird",
-      desc: "7-day streak",
+      title: t("Early Bird"),
+      desc: t("7-day streak"),
       icon: "workspace_premium",
       unlocked: longestStreak >= 7,
       progress: Math.min(100, (longestStreak / 7) * 100),
-      sub: `${longestStreak}/7 days`,
+      sub: `${longestStreak}/7 ${t("days")}`,
     },
     {
-      title: "Task Crusher",
-      desc: "25 tasks done",
+      title: t("Task Crusher"),
+      desc: t("25 tasks done"),
       icon: "task_alt",
       unlocked: tasksDone >= 25,
       progress: Math.min(100, (tasksDone / 25) * 100),
       sub: `${tasksDone}/25`,
     },
     {
-      title: "Study Master",
-      desc: "50 hours logged",
+      title: t("Study Master"),
+      desc: t("50 hours logged"),
       icon: "school",
       unlocked: totalFocusMinutes / 60 >= 50,
       progress: Math.min(100, (totalFocusMinutes / 60 / 50) * 100),
       sub: `${totalFocusHours}/50h`,
     },
     {
-      title: "Knowledge Seeker",
-      desc: "10 lessons completed",
+      title: t("Knowledge Seeker"),
+      desc: t("10 lessons completed"),
       icon: "auto_stories",
       unlocked: completedLessons >= 10,
       progress: Math.min(100, (completedLessons / 10) * 100),
@@ -113,7 +115,7 @@ export default function Stats() {
 
   return (
     <div className="bg-background text-on-surface min-h-screen pb-32">
-      <TopAppBar title="Your Impact" showProfile />
+      <TopAppBar title={t("Your Impact")} showProfile />
 
       <main className="px-container_margin_mobile mt-20 space-y-xl max-w-2xl mx-auto">
         {/* Overview bento */}
@@ -122,23 +124,23 @@ export default function Stats() {
             <span className="material-symbols-outlined text-primary icon-filled">task_alt</span>
             <div>
               <p className="text-display-lg text-primary leading-none">{habitsCompleted}</p>
-              <p className="text-label-md text-on-surface-variant mt-xs">Habits completed</p>
+              <p className="text-label-md text-on-surface-variant mt-xs">{t("Habits completed")}</p>
             </div>
           </div>
           <div className="bg-surface-container-lowest p-lg rounded-xl border border-outline-variant shadow-card flex flex-col justify-between">
             <span className="material-symbols-outlined text-secondary icon-filled">local_fire_department</span>
             <div>
               <p className="text-display-lg text-secondary leading-none">{tasksDone}</p>
-              <p className="text-label-md text-on-surface-variant mt-xs">Tasks done</p>
+              <p className="text-label-md text-on-surface-variant mt-xs">{t("Tasks done")}</p>
             </div>
           </div>
           <div onClick={() => navigate("/stats/focus-time")} className="col-span-2 bg-primary-container text-on-primary-container p-lg rounded-xl flex items-center justify-between cursor-pointer active:scale-[0.99] transition-transform">
             <div>
-              <p className="text-label-md opacity-80 uppercase tracking-widest">Focus Duration</p>
+              <p className="text-label-md opacity-80 uppercase tracking-widest">{t("Focus Duration")}</p>
               <p className="text-display-lg mt-xs">{totalFocusHours}h</p>
               <p className="text-body-sm opacity-90 mt-xs flex items-center gap-1">
-                Total study time
-                <span className="material-symbols-outlined text-[16px]">chevron_right</span>
+                {t("Total study time")}
+                <span className="material-symbols-outlined text-[16px] rtl-flip">chevron_right</span>
               </p>
             </div>
             <div className="w-20 h-20 relative">
@@ -163,14 +165,14 @@ export default function Stats() {
           </div>
           <div onClick={() => navigate("/stats/finance")} className="col-span-2 bg-tertiary-container text-on-tertiary-container p-lg rounded-xl flex items-center justify-between cursor-pointer active:scale-[0.99] transition-transform">
             <div>
-              <p className="text-label-md opacity-80 uppercase tracking-widest">This Month's Net</p>
+              <p className="text-label-md opacity-80 uppercase tracking-widest">{t("This Month's Net")}</p>
               <p className="text-display-lg mt-xs">
                 {monthNet >= 0 ? "+" : ""}
                 {monthNet} {currency}
               </p>
               <p className="text-body-sm opacity-90 mt-xs flex items-center gap-1">
-                View finance stats
-                <span className="material-symbols-outlined text-[16px]">chevron_right</span>
+                {t("View finance stats")}
+                <span className="material-symbols-outlined text-[16px] rtl-flip">chevron_right</span>
               </p>
             </div>
             <span className="material-symbols-outlined text-4xl">account_balance_wallet</span>
@@ -181,8 +183,8 @@ export default function Stats() {
         <section className="bg-surface-container-lowest p-lg rounded-xl border border-outline-variant shadow-card">
           <div className="flex justify-between items-end mb-lg">
             <div>
-              <h2 className="text-title-md text-on-surface">Productivity Trends</h2>
-              <p className="text-body-sm text-on-surface-variant">Activity this week</p>
+              <h2 className="text-title-md text-on-surface">{t("Productivity Trends")}</h2>
+              <p className="text-body-sm text-on-surface-variant">{t("Activity this week")}</p>
             </div>
           </div>
           <div className="h-48 flex items-end justify-between gap-sm px-sm">
@@ -203,7 +205,7 @@ export default function Stats() {
         {/* Achievements */}
         <section>
           <div className="flex justify-between items-center mb-md">
-            <h2 className="text-title-md text-on-surface">Milestones</h2>
+            <h2 className="text-title-md text-on-surface">{t("Milestones")}</h2>
           </div>
           <div className="grid grid-cols-2 gap-md">
             {achievements.map((a) => (
@@ -232,7 +234,7 @@ export default function Stats() {
                 <p className="text-body-sm text-on-surface-variant">{a.desc}</p>
                 {a.unlocked ? (
                   <span className="mt-sm px-2 py-0.5 bg-tertiary-fixed text-on-tertiary-fixed-variant text-[10px] rounded-full uppercase font-bold tracking-wider">
-                    Unlocked
+                    {t("Unlocked")}
                   </span>
                 ) : (
                   <>

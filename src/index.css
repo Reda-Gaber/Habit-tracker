@@ -168,3 +168,13 @@ body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* RTL support: mirror directional icons (back arrows, chevrons) only when
+   the document is in RTL mode. Harmless no-op in LTR. */
+[dir="rtl"] .rtl-flip {
+  transform: scaleX(-1);
+}
+
+[dir="rtl"] body {
+  font-family: "Tahoma", "Segoe UI", "Cairo", sans-serif;
+}

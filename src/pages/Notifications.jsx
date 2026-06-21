@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "../db/db";
 import BottomNav from "../components/BottomNav";
+import { useLanguage } from "../utils/language";
 
 const FILTERS = [
   { key: "all", label: "All" },
@@ -12,9 +13,9 @@ const FILTERS = [
   { key: "danger", label: "Alerts" },
 ];
 
-function relativeTime(ts) {
+function relativeTime(ts, t) {
   const diffMin = Math.floor((Date.now() - ts) / 60000);
-  if (diffMin < 1) return "Just now";
+  if (diffMin < 1) return t("Just now");
   if (diffMin < 60) return `${diffMin}m ago`;
   const diffHr = Math.floor(diffMin / 60);
   if (diffHr < 24) return `${diffHr}h ago`;
@@ -34,6 +35,7 @@ function typeStyles(type) {
 
 export default function Notifications() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const notifications = useLiveQuery(() => db.notifications.toArray(), []) || [];
   const [filter, setFilter] = useState("all");
   const [showFilter, setShowFilter] = useState(false);
@@ -59,7 +61,7 @@ export default function Notifications() {
     await db.notifications.bulkDelete(filtered.map((n) => n.id));
   };
 
-  const activeFilterLabel = FILTERS.find((f) => f.key === filter)?.label;
+  const activeFilterLabel = t(FILTERS.find((f) => f.key === filter)?.label);
 
   return (
     <div className="bg-background text-on-background min-h-screen pb-24">
@@ -68,10 +70,10 @@ export default function Notifications() {
           onClick={() => navigate(-1)}
           className="flex items-center gap-2 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200 p-2 -ml-2 rounded-full"
         >
-          <span className="material-symbols-outlined">arrow_back</span>
-          <span className="text-label-md">Back</span>
+          <span className="material-symbols-outlined rtl-flip">arrow_back</span>
+          <span className="text-label-md">{t("Back")}</span>
         </button>
-        <h1 className="text-title-md text-primary">Notifications</h1>
+        <h1 className="text-title-md text-primary">{t("Notifications")}</h1>
         <div className="flex items-center gap-xs">
           <button
             onClick={() => setShowFilter(true)}
@@ -103,7 +105,7 @@ export default function Notifications() {
 
         {filtered.length === 0 && (
           <div className="text-center py-2xl text-on-surface-variant text-body-sm">
-            {notifications.length === 0 ? "No notifications yet." : "Nothing here for this filter."}
+            {notifications.length === 0 ? t("No notifications yet.") : t("Nothing here for this filter.")}
           </div>
         )}
 
@@ -118,7 +120,7 @@ export default function Notifications() {
               <div className="flex-1 min-w-0">
                 <p className="text-body-lg text-on-surface font-semibold">{n.title}</p>
                 <p className="text-body-sm text-on-surface-variant">{n.message}</p>
-                <p className="text-label-md text-on-surface-variant mt-1">{relativeTime(n.createdAt)}</p>
+                <p className="text-label-md text-on-surface-variant mt-1">{relativeTime(n.createdAt, t)}</p>
               </div>
               <div className="flex flex-col gap-sm shrink-0">
                 <button
@@ -147,7 +149,7 @@ export default function Notifications() {
         <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/30" onClick={() => setShowFilter(false)}>
           <div className="w-full max-w-md bg-surface rounded-t-2xl p-lg pb-xl space-y-md" onClick={(e) => e.stopPropagation()}>
             <div className="w-12 h-1.5 bg-surface-container-high rounded-full mx-auto mb-md" />
-            <h3 className="text-title-md text-on-surface">Filter Notifications</h3>
+            <h3 className="text-title-md text-on-surface">{t("Filter Notifications")}</h3>
             <div className="flex flex-col gap-sm">
               {FILTERS.map((f) => (
                 <button
@@ -162,7 +164,7 @@ export default function Notifications() {
                       : "bg-surface-container-lowest text-on-surface hover:bg-surface-container-low"
                   }`}
                 >
-                  <span className="text-body-lg">{f.label}</span>
+                  <span className="text-body-lg">{t(f.label)}</span>
                   {filter === f.key && <span className="material-symbols-outlined">check</span>}
                 </button>
               ))}

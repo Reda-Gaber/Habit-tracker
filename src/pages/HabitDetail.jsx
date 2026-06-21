@@ -2,6 +2,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "../db/db";
 import BottomNav from "../components/BottomNav";
+import { useLanguage } from "../utils/language";
 
 const COLOR_MAP = {
   primary: { bg: "bg-primary-fixed", text: "text-primary", solid: "bg-primary" },
@@ -71,6 +72,7 @@ export default function HabitDetail() {
 
   const habit = useLiveQuery(() => db.habits.get(habitId), [habitId]);
   const logs = useLiveQuery(() => db.habitLogs.where("habitId").equals(habitId).toArray(), [habitId]) || [];
+  const { t } = useLanguage();
 
   if (!habit) {
     return (
@@ -131,8 +133,8 @@ export default function HabitDetail() {
           onClick={() => navigate(-1)}
           className="flex items-center gap-2 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200 p-2 -ml-2 rounded-full"
         >
-          <span className="material-symbols-outlined">arrow_back</span>
-          <span className="text-label-md">Back</span>
+          <span className="material-symbols-outlined rtl-flip">arrow_back</span>
+          <span className="text-label-md">{t("Back")}</span>
         </button>
         <h1 className="text-title-md text-primary truncate px-2">{habit.name}</h1>
         <button
@@ -155,10 +157,10 @@ export default function HabitDetail() {
               <span className="material-symbols-outlined">{habit.icon || "task_alt"}</span>
             </div>
             <div>
-              <p className="text-label-md opacity-80">CURRENT STREAK</p>
+              <p className="text-label-md opacity-80">{t("CURRENT STREAK")}</p>
               <div className="flex items-baseline gap-xs">
                 <h2 className="text-display-lg">{streak}</h2>
-                <span className="text-title-md">days</span>
+                <span className="text-title-md">{t("days")}</span>
               </div>
             </div>
           </div>
@@ -174,7 +176,7 @@ export default function HabitDetail() {
             }`}
           >
             <span className="material-symbols-outlined">{doneToday ? "check_circle" : "radio_button_unchecked"}</span>
-            {!scheduledToday ? "Not scheduled today" : doneToday ? "Done today" : "Mark today done"}
+            {!scheduledToday ? t("Not scheduled today") : doneToday ? t("Done today") : t("Mark today done")}
           </button>
         </section>
 
@@ -182,21 +184,21 @@ export default function HabitDetail() {
         <section className="grid grid-cols-3 gap-sm">
           <div className="bento-card p-md flex flex-col items-center gap-1">
             <span className="text-title-md text-on-surface">{bestStreak}</span>
-            <span className="text-label-md text-on-surface-variant text-center">Best Streak</span>
+            <span className="text-label-md text-on-surface-variant text-center">{t("Best Streak")}</span>
           </div>
           <div className="bento-card p-md flex flex-col items-center gap-1">
             <span className="text-title-md text-on-surface">{totalActive}</span>
-            <span className="text-label-md text-on-surface-variant text-center">Total Logged</span>
+            <span className="text-label-md text-on-surface-variant text-center">{t("Total Logged")}</span>
           </div>
           <div className="bento-card p-md flex flex-col items-center gap-1">
-            <span className="text-title-md text-on-surface capitalize">{habit.frequency}</span>
-            <span className="text-label-md text-on-surface-variant text-center">Frequency</span>
+            <span className="text-title-md text-on-surface capitalize">{t(habit.frequency)}</span>
+            <span className="text-label-md text-on-surface-variant text-center">{t("Frequency")}</span>
           </div>
         </section>
 
         {/* Heatmap */}
         <section className="bento-card p-md overflow-x-auto">
-          <h3 className="text-title-md text-on-surface mb-md px-1">Past Year</h3>
+          <h3 className="text-title-md text-on-surface mb-md px-1">{t("Past Year")}</h3>
           <div className="inline-flex flex-col gap-1 min-w-max px-1">
             <div className="flex gap-[3px] pl-6">
               {weeks.map((_, w) => {
@@ -238,7 +240,7 @@ export default function HabitDetail() {
             </div>
           </div>
           <p className="text-label-md text-on-surface-variant mt-md px-1">
-            Tap any past day to log or unlog it — handy for catching up on a day you forgot.
+            {t("Tap any past day to log or unlog it — handy for catching up on a day you forgot.")}
           </p>
         </section>
 
@@ -247,7 +249,7 @@ export default function HabitDetail() {
           className="w-full py-3 rounded-xl text-error border border-error/40 flex items-center justify-center gap-sm hover:bg-error/5 transition-colors"
         >
           <span className="material-symbols-outlined">delete</span>
-          Delete Habit
+          {t("Delete Habit")}
         </button>
       </main>
 

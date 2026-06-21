@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "../db/db";
 import BottomNav from "../components/BottomNav";
+import { useLanguage } from "../utils/language";
 
 const MONTH_LABELS = [
   "January", "February", "March", "April", "May", "June",
@@ -29,6 +30,7 @@ function todayStr() {
 
 export default function Calendar() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [cursor, setCursor] = useState(() => {
     const d = new Date();
     return { year: d.getFullYear(), month: d.getMonth() };
@@ -106,12 +108,12 @@ export default function Calendar() {
           onClick={() => navigate(-1)}
           className="flex items-center gap-2 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200 p-2 -ml-2 rounded-full"
         >
-          <span className="material-symbols-outlined">arrow_back</span>
-          <span className="text-label-md">Back</span>
+          <span className="material-symbols-outlined rtl-flip">arrow_back</span>
+          <span className="text-label-md">{t("Back")}</span>
         </button>
-        <h1 className="text-title-md text-primary">Calendar</h1>
+        <h1 className="text-title-md text-primary">{t("Calendar")}</h1>
         <button onClick={goToToday} className="text-label-md text-primary px-2">
-          Today
+          {t("Today")}
         </button>
       </header>
 
@@ -123,7 +125,7 @@ export default function Calendar() {
             aria-label="Previous month"
             className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-low text-on-surface-variant"
           >
-            <span className="material-symbols-outlined">chevron_left</span>
+            <span className="material-symbols-outlined rtl-flip">chevron_left</span>
           </button>
           <h2 className="text-title-md text-on-surface">
             {MONTH_LABELS[cursor.month]} {cursor.year}
@@ -133,17 +135,17 @@ export default function Calendar() {
             aria-label="Next month"
             className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-low text-on-surface-variant"
           >
-            <span className="material-symbols-outlined">chevron_right</span>
+            <span className="material-symbols-outlined rtl-flip">chevron_right</span>
           </button>
         </div>
 
         {/* Legend */}
         <div className="flex flex-wrap gap-md text-label-md text-on-surface-variant">
-          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-tertiary inline-block" /> Habits</span>
-          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-error inline-block" /> Tasks</span>
-          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-primary inline-block" /> Study</span>
-          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-secondary inline-block" /> Finance</span>
-          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-on-surface-variant inline-block" /> Journal</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-tertiary inline-block" /> {t("Habits")}</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-error inline-block" /> {t("Tasks")}</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-primary inline-block" /> {t("Study")}</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-secondary inline-block" /> {t("Finance")}</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-on-surface-variant inline-block" /> {t("Journal")}</span>
         </div>
 
         {/* Grid */}
@@ -197,7 +199,7 @@ export default function Calendar() {
         </section>
 
         {!selected && (
-          <p className="text-center text-on-surface-variant text-body-sm py-md">Tap a day to see what happened.</p>
+          <p className="text-center text-on-surface-variant text-body-sm py-md">{t("Tap a day to see what happened.")}</p>
         )}
       </main>
 
@@ -218,6 +220,7 @@ export default function Calendar() {
 }
 
 function DaySheet({ selected, onClose, onNavigate }) {
+  const { t } = useLanguage();
   const d = new Date(selected.date);
   const label = d.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
   const isEmpty =
@@ -237,11 +240,11 @@ function DaySheet({ selected, onClose, onNavigate }) {
         <div className="w-12 h-1.5 bg-surface-container-high rounded-full mx-auto mb-md" />
         <h3 className="text-title-md text-on-surface">{label}</h3>
 
-        {isEmpty && <p className="text-body-sm text-on-surface-variant py-md">Nothing logged this day.</p>}
+        {isEmpty && <p className="text-body-sm text-on-surface-variant py-md">{t("Nothing logged this day.")}</p>}
 
         {selected.habits.length > 0 && (
           <div className="space-y-xs">
-            <p className="text-label-md text-on-surface-variant uppercase tracking-wider">Habits Completed</p>
+            <p className="text-label-md text-on-surface-variant uppercase tracking-wider">{t("Habits Completed")}</p>
             {selected.habits.map((h) => (
               <div key={h.id} className="flex items-center gap-2 text-body-sm text-on-surface">
                 <span className="material-symbols-outlined text-tertiary text-[18px] icon-filled">check_circle</span>
@@ -253,7 +256,7 @@ function DaySheet({ selected, onClose, onNavigate }) {
 
         {selected.tasks.length > 0 && (
           <div className="space-y-xs">
-            <p className="text-label-md text-on-surface-variant uppercase tracking-wider">Tasks Due</p>
+            <p className="text-label-md text-on-surface-variant uppercase tracking-wider">{t("Tasks Due")}</p>
             {selected.tasks.map((t) => (
               <button
                 key={t.id}
@@ -271,7 +274,7 @@ function DaySheet({ selected, onClose, onNavigate }) {
 
         {selected.study.length > 0 && (
           <div className="space-y-xs">
-            <p className="text-label-md text-on-surface-variant uppercase tracking-wider">Study Sessions</p>
+            <p className="text-label-md text-on-surface-variant uppercase tracking-wider">{t("Study Sessions")}</p>
             {selected.study.map((s) => (
               <div key={s.id} className="flex items-center gap-2 text-body-sm text-on-surface">
                 <span className="material-symbols-outlined text-primary text-[18px]">menu_book</span>
@@ -283,7 +286,7 @@ function DaySheet({ selected, onClose, onNavigate }) {
 
         {selected.transactions.length > 0 && (
           <div className="space-y-xs">
-            <p className="text-label-md text-on-surface-variant uppercase tracking-wider">Transactions</p>
+            <p className="text-label-md text-on-surface-variant uppercase tracking-wider">{t("Transactions")}</p>
             {selected.transactions.map((t) => (
               <button
                 key={t.id}
@@ -301,7 +304,7 @@ function DaySheet({ selected, onClose, onNavigate }) {
 
         {selected.goals.length > 0 && (
           <div className="space-y-xs">
-            <p className="text-label-md text-on-surface-variant uppercase tracking-wider">Goal Deadlines</p>
+            <p className="text-label-md text-on-surface-variant uppercase tracking-wider">{t("Goal Deadlines")}</p>
             {selected.goals.map((g) => (
               <button
                 key={g.id}
@@ -317,7 +320,7 @@ function DaySheet({ selected, onClose, onNavigate }) {
 
         {selected.journal && (
           <div className="space-y-xs">
-            <p className="text-label-md text-on-surface-variant uppercase tracking-wider">Journal</p>
+            <p className="text-label-md text-on-surface-variant uppercase tracking-wider">{t("Journal")}</p>
             <button
               onClick={() => onNavigate("/journal")}
               className="text-body-sm text-on-surface-variant text-left line-clamp-2"

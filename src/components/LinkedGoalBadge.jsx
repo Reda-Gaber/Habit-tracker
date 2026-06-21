@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "../db/db";
 import { getGoalProgress, getGoalsLinkedTo } from "../utils/goalProgress";
+import { useLanguage } from "../utils/language";
 
 /**
  * Shows a small "Linked Goal" card when a goal points at this exact
@@ -10,6 +11,7 @@ import { getGoalProgress, getGoalsLinkedTo } from "../utils/goalProgress";
  */
 export default function LinkedGoalBadge({ linkedType, linkedId }) {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const goals = useLiveQuery(() => db.goals.toArray(), []) || [];
   const subjects = useLiveQuery(() => db.subjects.toArray(), []) || [];
   const levels = useLiveQuery(() => db.levels.toArray(), []) || [];
@@ -33,11 +35,11 @@ export default function LinkedGoalBadge({ linkedType, linkedId }) {
           >
             <span className="material-symbols-outlined text-primary icon-filled shrink-0">flag</span>
             <div className="flex-1 min-w-0">
-              <p className="text-label-md text-primary uppercase tracking-wider">Linked Goal</p>
+              <p className="text-label-md text-primary uppercase tracking-wider">{t("Linked Goal")}</p>
               <p className="text-body-sm text-on-surface truncate">{goal.title}</p>
             </div>
             <span className="text-title-md text-primary shrink-0">{pct}%</span>
-            <span className="material-symbols-outlined text-on-surface-variant text-[18px] shrink-0">chevron_right</span>
+            <span className="material-symbols-outlined text-on-surface-variant text-[18px] shrink-0 rtl-flip">chevron_right</span>
           </button>
         );
       })}

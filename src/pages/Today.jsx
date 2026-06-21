@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "../db/db";
 import BottomNav from "../components/BottomNav";
+import { useLanguage } from "../utils/language";
 
 const COLOR_MAP = {
   primary: { bg: "bg-primary-fixed", text: "text-primary" },
@@ -15,6 +16,7 @@ function todayStr() {
 
 export default function Today() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const habits = useLiveQuery(() => db.habits.toArray(), []) || [];
   const habitLogs = useLiveQuery(() => db.habitLogs.toArray(), []) || [];
   const tasks = useLiveQuery(() => db.tasks.toArray(), []) || [];
@@ -68,10 +70,10 @@ export default function Today() {
           onClick={() => navigate(-1)}
           className="flex items-center gap-2 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200 p-2 -ml-2 rounded-full"
         >
-          <span className="material-symbols-outlined">arrow_back</span>
-          <span className="text-label-md">Back</span>
+          <span className="material-symbols-outlined rtl-flip">arrow_back</span>
+          <span className="text-label-md">{t("Back")}</span>
         </button>
-        <h1 className="text-title-md text-primary">Today</h1>
+        <h1 className="text-title-md text-primary">{t("Today")}</h1>
         <div className="w-10" />
       </header>
 
@@ -81,23 +83,23 @@ export default function Today() {
           {totalCount > 0 ? (
             <>
               <p className="text-display-lg mb-1">{completedCount}/{totalCount}</p>
-              <p className="text-body-sm opacity-90">items done so far today</p>
+              <p className="text-body-sm opacity-90">{t("items done so far today")}</p>
             </>
           ) : (
-            <p className="text-title-md">Nothing scheduled — open agenda 🎉</p>
+            <p className="text-title-md">{t("Nothing scheduled — open agenda 🎉")}</p>
           )}
         </section>
 
         {isEmpty && (
           <div className="text-center py-xl text-on-surface-variant text-body-sm">
-            All clear for today. Maybe write in your journal or get ahead on a lesson.
+            {t("All clear for today. Maybe write in your journal or get ahead on a lesson.")}
           </div>
         )}
 
         {/* Habits */}
         {todayHabits.length > 0 && (
           <section className="space-y-sm">
-            <h3 className="text-title-md text-on-surface px-1">Habits</h3>
+            <h3 className="text-title-md text-on-surface px-1">{t("Habits")}</h3>
             <div className="flex flex-col gap-sm">
               {todayHabits.map((h) => {
                 const done = habitLogs.some((l) => l.habitId === h.id && l.date === todayKey);
@@ -137,7 +139,7 @@ export default function Today() {
         {/* Tasks */}
         {todayTasks.length > 0 && (
           <section className="space-y-sm">
-            <h3 className="text-title-md text-on-surface px-1">Tasks</h3>
+            <h3 className="text-title-md text-on-surface px-1">{t("Tasks")}</h3>
             <div className="flex flex-col gap-sm">
               {todayTasks.map((t) => (
                 <div
@@ -176,7 +178,7 @@ export default function Today() {
         {/* Continue Learning */}
         {inProgressLessons.length > 0 && (
           <section className="space-y-sm">
-            <h3 className="text-title-md text-on-surface px-1">Continue Learning</h3>
+            <h3 className="text-title-md text-on-surface px-1">{t("Continue Learning")}</h3>
             <div className="flex flex-col gap-sm">
               {inProgressLessons.map((l) => {
                 const course = courses.find((c) => c.id === l.courseId);
@@ -191,7 +193,7 @@ export default function Today() {
                       <p className="text-body-sm text-on-surface truncate">{l.name}</p>
                       {course && <p className="text-label-md text-on-surface-variant">{course.name}</p>}
                     </div>
-                    <span className="material-symbols-outlined text-on-surface-variant text-[18px] shrink-0">chevron_right</span>
+                    <span className="material-symbols-outlined rtl-flip text-on-surface-variant text-[18px] shrink-0">chevron_right</span>
                   </button>
                 );
               })}
@@ -202,7 +204,7 @@ export default function Today() {
         {/* Recurring transactions firing today */}
         {todayRecurring.length > 0 && (
           <section className="space-y-sm">
-            <h3 className="text-title-md text-on-surface px-1">Scheduled Today</h3>
+            <h3 className="text-title-md text-on-surface px-1">{t("Scheduled Today")}</h3>
             <div className="flex flex-col gap-sm">
               {todayRecurring.map((r) => (
                 <button
@@ -233,9 +235,9 @@ export default function Today() {
         >
           <span className="material-symbols-outlined text-secondary shrink-0">auto_stories</span>
           <p className="flex-1 text-left text-body-sm text-on-surface">
-            {journalToday ? "You've written in your journal today" : "Haven't written in your journal today"}
+            {journalToday ? t("You've written in your journal today") : t("Haven't written in your journal today")}
           </p>
-          <span className="material-symbols-outlined text-on-surface-variant text-[18px] shrink-0">chevron_right</span>
+          <span className="material-symbols-outlined rtl-flip text-on-surface-variant text-[18px] shrink-0">chevron_right</span>
         </button>
       </main>
 

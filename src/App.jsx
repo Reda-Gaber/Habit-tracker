@@ -4,6 +4,7 @@ import { seedIfEmpty, getSetting } from "./db/db";
 import { runNotificationChecks } from "./utils/notifications";
 import { runRecurringTransactions } from "./utils/recurringEngine";
 import { useTheme } from "./utils/theme";
+import { useLanguage } from "./utils/language";
 
 import Onboarding from "./pages/Onboarding";
 import Dashboard from "./pages/Dashboard";
@@ -31,6 +32,7 @@ function App() {
   const [ready, setReady] = useState(false);
   const [onboarded, setOnboarded] = useState(false);
   useTheme();
+  useLanguage();
 
   useEffect(() => {
     (async () => {

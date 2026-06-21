@@ -4,6 +4,7 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "../db/db";
 import BottomNav from "../components/BottomNav";
 import FAB from "../components/FAB";
+import { useLanguage } from "../utils/language";
 
 const MOODS = [
   { key: "great", emoji: "😄", label: "Great" },
@@ -21,17 +22,18 @@ function todayStr() {
   return new Date().toISOString().split("T")[0];
 }
 
-function formatDateLabel(dateStr) {
+function formatDateLabel(dateStr, t = (s) => s) {
   const d = new Date(dateStr);
   const today = todayStr();
   const yesterday = new Date(Date.now() - 86400000).toISOString().split("T")[0];
-  if (dateStr === today) return "Today";
-  if (dateStr === yesterday) return "Yesterday";
+  if (dateStr === today) return t("Today");
+  if (dateStr === yesterday) return t("Yesterday");
   return d.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
 }
 
 export default function Journal() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const entries = useLiveQuery(() => db.journalEntries.toArray(), []) || [];
   const [activeEntry, setActiveEntry] = useState(null); // null | "new" | entry object
 
@@ -53,17 +55,17 @@ export default function Journal() {
           onClick={() => navigate(-1)}
           className="flex items-center gap-2 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200 p-2 -ml-2 rounded-full"
         >
-          <span className="material-symbols-outlined">arrow_back</span>
-          <span className="text-label-md">Back</span>
+          <span className="material-symbols-outlined rtl-flip">arrow_back</span>
+          <span className="text-label-md">{t("Back")}</span>
         </button>
-        <h1 className="text-title-md text-primary">Journal</h1>
+        <h1 className="text-title-md text-primary">{t("Journal")}</h1>
         <div className="w-10" />
       </header>
 
       <main className="max-w-2xl mx-auto px-container_margin_mobile pt-4 flex flex-col gap-lg">
         {totalEntries > 0 && (
           <section className="bg-surface-container-lowest rounded-xl p-lg border border-outline-variant shadow-card">
-            <p className="text-label-md text-on-surface-variant uppercase tracking-wider mb-md">Mood Overview</p>
+            <p className="text-label-md text-on-surface-variant uppercase tracking-wider mb-md">{t("Mood Overview")}</p>
             <div className="flex justify-between">
               {moodCounts.map((m) => (
                 <div key={m.key} className="flex flex-col items-center gap-1">
@@ -81,13 +83,13 @@ export default function Journal() {
             className="w-full h-16 bg-surface-container-lowest border-2 border-dashed border-outline-variant rounded-xl flex items-center justify-center gap-sm text-on-surface-variant hover:border-primary hover:text-primary transition-all"
           >
             <span className="material-symbols-outlined">edit_note</span>
-            <span className="text-title-md">Write today's entry</span>
+            <span className="text-title-md">{t("Write today's entry")}</span>
           </button>
         )}
 
         {sorted.length === 0 && (
           <div className="text-center py-xl text-on-surface-variant text-body-sm">
-            No journal entries yet. Tap above to write your first one.
+            {t("No journal entries yet. Tap above to write your first one.")}
           </div>
         )}
 
@@ -101,7 +103,7 @@ export default function Journal() {
               <div className="flex items-start justify-between gap-md mb-sm">
                 <div className="flex items-center gap-sm">
                   <span className="text-2xl shrink-0">{moodEmoji(entry.mood)}</span>
-                  <p className="text-body-sm text-on-surface font-semibold">{formatDateLabel(entry.date)}</p>
+                  <p className="text-body-sm text-on-surface font-semibold">{formatDateLabel(entry.date, t)}</p>
                 </div>
                 <button
                   onClick={(e) => {
@@ -132,6 +134,7 @@ export default function Journal() {
 }
 
 function EntrySheet({ entry, onClose }) {
+  const { t } = useLanguage();
   const isEdit = !!entry;
   const [mood, setMood] = useState(entry?.mood || "good");
   const [text, setText] = useState(entry?.text || "");
@@ -154,10 +157,10 @@ function EntrySheet({ entry, onClose }) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="w-12 h-1.5 bg-surface-container-high rounded-full mx-auto mb-md" />
-        <h3 className="text-title-md text-on-surface">{isEdit ? formatDateLabel(entry.date) : "Today's Entry"}</h3>
+        <h3 className="text-title-md text-on-surface">{isEdit ? formatDateLabel(entry.date, t) : t("Today's Entry")}</h3>
 
         <div className="space-y-sm">
-          <label className="text-label-md text-on-surface-variant uppercase tracking-wider">How was it?</label>
+          <label className="text-label-md text-on-surface-variant uppercase tracking-wider">{t("How was it?")}</label>
           <div className="flex justify-between">
             {MOODS.map((m) => (
               <button
@@ -168,19 +171,19 @@ function EntrySheet({ entry, onClose }) {
                 }`}
               >
                 <span className="text-2xl">{m.emoji}</span>
-                <span className="text-label-md text-on-surface-variant">{m.label}</span>
+                <span className="text-label-md text-on-surface-variant">{t(m.label)}</span>
               </button>
             ))}
           </div>
         </div>
 
         <div className="space-y-sm">
-          <label className="text-label-md text-on-surface-variant uppercase tracking-wider">What happened?</label>
+          <label className="text-label-md text-on-surface-variant uppercase tracking-wider">{t("What happened?")}</label>
           <textarea
             autoFocus
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="Write about your day..."
+            placeholder={t("Write about your day...")}
             rows={6}
             className="w-full px-lg py-4 bg-surface-container-lowest border border-outline-variant rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-all text-body-lg placeholder:text-outline outline-none resize-none"
           />
@@ -191,7 +194,7 @@ function EntrySheet({ entry, onClose }) {
           className="w-full py-4 px-lg rounded-full text-title-md text-on-primary bg-primary active:scale-[0.98] transition-all flex items-center justify-center gap-sm shadow-lg"
         >
           <span className="material-symbols-outlined icon-filled">check_circle</span>
-          {isEdit ? "Save Changes" : "Save Entry"}
+          {isEdit ? t("Save Changes") : t("Save Entry")}
         </button>
       </div>
     </div>

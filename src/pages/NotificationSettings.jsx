@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { getSetting, setSetting, exportAllData, importAllData } from "../db/db";
 import { requestNotificationPermission, getNotificationPermission } from "../utils/notifications";
 import { useTheme } from "../utils/theme";
+import { useLanguage } from "../utils/language";
 
 function Toggle({ checked, onChange }) {
   return (
@@ -30,6 +31,7 @@ export default function NotificationSettings() {
   const [editingTime, setEditingTime] = useState(false);
   const [permission, setPermission] = useState("default");
   const { mode, setThemeMode } = useTheme();
+  const { lang, setLanguage, t } = useLanguage();
   const [backupStatus, setBackupStatus] = useState(null); // { type: 'success'|'error', message }
   const fileInputRef = useRef(null);
 
@@ -114,11 +116,11 @@ export default function NotificationSettings() {
           <button
             onClick={() => navigate(-1)}
             aria-label="Go back"
-            className="material-symbols-outlined text-on-surface-variant p-2 rounded-full hover:bg-surface-container-low active:scale-95 transition-transform"
+            className="material-symbols-outlined rtl-flip text-on-surface-variant p-2 rounded-full hover:bg-surface-container-low active:scale-95 transition-transform"
           >
             arrow_back
           </button>
-          <h1 className="text-title-md text-primary">Settings</h1>
+          <h1 className="text-title-md text-primary">{t("Settings")}</h1>
         </div>
       </header>
 
@@ -265,6 +267,32 @@ export default function NotificationSettings() {
           </div>
         </section>
 
+        {/* Language */}
+        <section className="mt-xl">
+          <div className="px-md mb-sm">
+            <span className="text-label-md text-on-surface-variant uppercase tracking-wider">{t("Language")}</span>
+          </div>
+          <div className="bg-surface-container-lowest rounded-xl shadow-card p-md flex items-center gap-sm">
+            {[
+              { key: "en", label: "English" },
+              { key: "ar", label: "العربية" },
+            ].map((opt) => (
+              <button
+                key={opt.key}
+                onClick={() => setLanguage(opt.key)}
+                className={`flex-1 flex flex-col items-center gap-1 py-md rounded-xl transition-all ${
+                  lang === opt.key
+                    ? "bg-primary-container text-on-primary-container"
+                    : "text-on-surface-variant hover:bg-surface-container-low"
+                }`}
+              >
+                <span className="material-symbols-outlined">language</span>
+                <span className="text-label-md">{opt.label}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+
         {/* Data Backup */}
         <section className="mt-xl mb-xl">
           <div className="px-md mb-sm">
@@ -284,7 +312,7 @@ export default function NotificationSettings() {
                   <p className="text-body-sm text-on-surface-variant">Save all your data as a JSON file</p>
                 </div>
               </div>
-              <span className="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+              <span className="material-symbols-outlined text-on-surface-variant rtl-flip">chevron_right</span>
             </button>
             <div className="border-t border-surface-variant">
               <button
@@ -300,7 +328,7 @@ export default function NotificationSettings() {
                     <p className="text-body-sm text-on-surface-variant">Restore from a JSON backup file</p>
                   </div>
                 </div>
-                <span className="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+                <span className="material-symbols-outlined text-on-surface-variant rtl-flip">chevron_right</span>
               </button>
             </div>
           </div>

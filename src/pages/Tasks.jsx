@@ -5,6 +5,7 @@ import { db } from "../db/db";
 import TopAppBar from "../components/TopAppBar";
 import BottomNav from "../components/BottomNav";
 import FAB from "../components/FAB";
+import { useLanguage } from "../utils/language";
 
 function todayStr() {
   return new Date().toISOString().split("T")[0];
@@ -46,6 +47,7 @@ function formatTime(t) {
 
 export default function Tasks() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const tasks = useLiveQuery(() => db.tasks.toArray(), []) || [];
   const [showFilters, setShowFilters] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -86,7 +88,7 @@ export default function Tasks() {
 
   return (
     <div className="bg-background text-on-background min-h-screen flex flex-col">
-      <TopAppBar title="Task Manager" showProfile />
+      <TopAppBar title={t("Task Manager")} showProfile />
 
       <main className="flex-grow pt-24 pb-32 px-container_margin_mobile max-w-2xl mx-auto w-full">
         {/* Filter bar */}
@@ -96,7 +98,7 @@ export default function Tasks() {
             className="relative flex items-center gap-1 px-md py-2 rounded-full bg-surface-container-lowest border border-outline-variant text-on-surface-variant hover:border-primary hover:text-primary transition-colors"
           >
             <span className="material-symbols-outlined text-[18px]">filter_list</span>
-            <span className="text-label-md">Filters</span>
+            <span className="text-label-md">{t("Filters")}</span>
             {activeFilterCount > 0 && (
               <span className="ml-1 w-5 h-5 rounded-full bg-primary text-on-primary text-[11px] flex items-center justify-center">
                 {activeFilterCount}
@@ -105,7 +107,7 @@ export default function Tasks() {
           </button>
           {activeFilterCount > 0 && (
             <button onClick={resetFilters} className="text-label-md text-on-surface-variant hover:text-error">
-              Clear
+              {t("Clear")}
             </button>
           )}
         </div>
@@ -113,7 +115,7 @@ export default function Tasks() {
         {/* Today Section */}
         <section className="mb-xl">
           <div className="flex justify-between items-end mb-md">
-            <h2 className="text-headline-lg-mobile text-on-surface">Today</h2>
+            <h2 className="text-headline-lg-mobile text-on-surface">{t("Today")}</h2>
             <span className="text-label-md text-on-surface-variant mb-1">
               {todayTasks.length} task{todayTasks.length !== 1 ? "s" : ""}
             </span>
@@ -121,7 +123,7 @@ export default function Tasks() {
           <div className="space-y-md">
             {todayTasks.length === 0 && (
               <div className="text-center py-lg text-on-surface-variant text-body-sm">
-                {activeFilterCount > 0 ? "No tasks match your filters." : "Nothing due today. Enjoy the calm!"}
+                {activeFilterCount > 0 ? t("No tasks match your filters.") : t("Nothing due today. Enjoy the calm!")}
               </div>
             )}
             {todayTasks.map((task) => (
@@ -133,7 +135,7 @@ export default function Tasks() {
         {/* Upcoming Section */}
         <section>
           <div className="flex justify-between items-end mb-md">
-            <h2 className="text-headline-lg-mobile text-on-surface">Upcoming</h2>
+            <h2 className="text-headline-lg-mobile text-on-surface">{t("Upcoming")}</h2>
             <span className="text-label-md text-on-surface-variant mb-1">
               {upcomingTasks.length} task{upcomingTasks.length !== 1 ? "s" : ""}
             </span>
@@ -141,7 +143,7 @@ export default function Tasks() {
           <div className="space-y-md">
             {upcomingTasks.length === 0 && (
               <div className="text-center py-lg text-on-surface-variant text-body-sm">
-                {activeFilterCount > 0 ? "No tasks match your filters." : "No upcoming tasks scheduled."}
+                {activeFilterCount > 0 ? t("No tasks match your filters.") : t("No upcoming tasks scheduled.")}
               </div>
             )}
             {upcomingTasks.map((task) => (
@@ -162,7 +164,7 @@ export default function Tasks() {
                     {task.hasDueTime && task.dueTime && ` • ${formatTime(task.dueTime)}`}
                   </p>
                 </div>
-                <span className="material-symbols-outlined text-on-surface-variant opacity-40">
+                <span className="material-symbols-outlined rtl-flip text-on-surface-variant opacity-40">
                   chevron_right
                 </span>
               </div>
@@ -200,19 +202,20 @@ function FilterSheet({
   setStatusFilter,
   onClose,
 }) {
+  const { t } = useLanguage();
   return (
     <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/30" onClick={onClose}>
       <div className="w-full max-w-md bg-surface rounded-t-2xl p-lg pb-xl space-y-lg" onClick={(e) => e.stopPropagation()}>
         <div className="w-12 h-1.5 bg-surface-container-high rounded-full mx-auto mb-md" />
-        <h3 className="text-title-md text-on-surface">Filter Tasks</h3>
+        <h3 className="text-title-md text-on-surface">{t("Filter Tasks")}</h3>
 
         <div className="space-y-sm">
-          <label className="text-label-md text-on-surface-variant uppercase tracking-wider">Status</label>
+          <label className="text-label-md text-on-surface-variant uppercase tracking-wider">{t("Status")}</label>
           <div className="flex gap-sm">
             {[
-              { key: "active", label: "Active" },
-              { key: "completed", label: "Completed" },
-              { key: "all", label: "All" },
+              { key: "active", label: t("Active") },
+              { key: "completed", label: t("Completed") },
+              { key: "all", label: t("All") },
             ].map((s) => (
               <button
                 key={s.key}
@@ -230,7 +233,7 @@ function FilterSheet({
         </div>
 
         <div className="space-y-sm">
-          <label className="text-label-md text-on-surface-variant uppercase tracking-wider">Priority</label>
+          <label className="text-label-md text-on-surface-variant uppercase tracking-wider">{t("Priority")}</label>
           <div className="flex gap-sm">
             {["all", "high", "medium", "low"].map((p) => (
               <button
@@ -242,7 +245,7 @@ function FilterSheet({
                     : "bg-surface-container-lowest border border-outline-variant text-on-surface-variant"
                 }`}
               >
-                {p === "all" ? "All" : p}
+                {p === "all" ? t("All") : t(p)}
               </button>
             ))}
           </div>
@@ -250,7 +253,7 @@ function FilterSheet({
 
         {categories.length > 0 && (
           <div className="space-y-sm">
-            <label className="text-label-md text-on-surface-variant uppercase tracking-wider">Category</label>
+            <label className="text-label-md text-on-surface-variant uppercase tracking-wider">{t("Category")}</label>
             <div className="flex gap-sm flex-wrap">
               <button
                 onClick={() => setCategoryFilter("all")}
@@ -260,7 +263,7 @@ function FilterSheet({
                     : "bg-surface-container-lowest border border-outline-variant text-on-surface-variant"
                 }`}
               >
-                All
+                {t("All")}
               </button>
               {categories.map((c) => (
                 <button
@@ -284,7 +287,7 @@ function FilterSheet({
           className="w-full py-4 px-lg rounded-full text-title-md text-on-primary bg-primary active:scale-[0.98] transition-all flex items-center justify-center gap-sm shadow-lg"
         >
           <span className="material-symbols-outlined icon-filled">check_circle</span>
-          Apply
+          {t("Apply")}
         </button>
       </div>
     </div>

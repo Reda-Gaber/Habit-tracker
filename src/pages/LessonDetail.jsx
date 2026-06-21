@@ -4,6 +4,7 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { db, getSetting, setSetting } from "../db/db";
 import BottomNav from "../components/BottomNav";
 import LinkedGoalBadge from "../components/LinkedGoalBadge";
+import { useLanguage } from "../utils/language";
 
 const STATUS_OPTIONS = [
   { key: "not_started", label: "Not Started", icon: "radio_button_unchecked", iconActive: "radio_button_checked" },
@@ -13,6 +14,7 @@ const STATUS_OPTIONS = [
 
 export default function LessonDetail() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const { id } = useParams();
   const lessonId = Number(id);
 
@@ -170,8 +172,8 @@ export default function LessonDetail() {
           onClick={() => navigate(-1)}
           className="flex items-center gap-2 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200 p-2 -ml-2 rounded-full"
         >
-          <span className="material-symbols-outlined">arrow_back</span>
-          <span className="text-label-md">Back to Course</span>
+          <span className="material-symbols-outlined rtl-flip">arrow_back</span>
+          <span className="text-label-md">{t("Back to Course")}</span>
         </button>
       </header>
 

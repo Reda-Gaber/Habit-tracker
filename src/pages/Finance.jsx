@@ -6,6 +6,7 @@ import TopAppBar from "../components/TopAppBar";
 import BottomNav from "../components/BottomNav";
 import FAB from "../components/FAB";
 import { isFinancialGoal, getFinancialGoalStats } from "../utils/goalProgress";
+import { useLanguage } from "../utils/language";
 
 const DEFAULT_EXPENSE_CATEGORIES = ["Food & Drink", "Groceries", "Transport", "Bills", "Shopping", "Health", "Entertainment", "Other"];
 const DEFAULT_INCOME_CATEGORIES = ["Salary", "Freelance", "Gift", "Investment", "Other"];
@@ -23,6 +24,7 @@ function monthStartStr() {
 export default function Finance() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useLanguage();
   const transactions = useLiveQuery(() => db.transactions.toArray(), []) || [];
   const goals = useLiveQuery(() => db.goals.toArray(), []) || [];
   const recurringRules = useLiveQuery(() => db.recurringTransactions.toArray(), []) || [];
@@ -109,24 +111,24 @@ export default function Finance() {
 
   return (
     <div className="bg-background text-on-background min-h-screen pb-24">
-      <TopAppBar title="Finance" showProfile />
+      <TopAppBar title={t("Finance")} showProfile />
 
       <main className="px-container_margin_mobile mt-20 space-y-xl max-w-2xl mx-auto">
         {/* Today snapshot */}
         <section className="grid grid-cols-2 gap-md">
           <div className="bg-surface-container-lowest rounded-xl shadow-card p-lg border border-outline-variant">
-            <span className="text-label-md text-on-surface-variant">Today's Income</span>
+            <span className="text-label-md text-on-surface-variant">{t("Today's Income")}</span>
             <p className="text-headline-lg-mobile text-tertiary mt-1">+{todayIncome}</p>
           </div>
           <div className="bg-surface-container-lowest rounded-xl shadow-card p-lg border border-outline-variant">
-            <span className="text-label-md text-on-surface-variant">Today's Expense</span>
+            <span className="text-label-md text-on-surface-variant">{t("Today's Expense")}</span>
             <p className="text-headline-lg-mobile text-error mt-1">-{todayExpense}</p>
           </div>
         </section>
 
         <section className="bg-primary-container rounded-xl p-lg text-on-primary-container flex items-center justify-between">
           <div>
-            <p className="text-label-md opacity-80 uppercase tracking-widest mb-1">Today's Net</p>
+            <p className="text-label-md opacity-80 uppercase tracking-widest mb-1">{t("Today's Net")}</p>
             <p className="text-display-lg">
               {todayNet >= 0 ? "+" : ""}{todayNet} {currency}
             </p>
@@ -137,36 +139,36 @@ export default function Finance() {
         {/* Limits */}
         <section className="space-y-md">
           <div className="flex justify-between items-center px-1">
-            <h3 className="text-title-md text-on-surface">Spending Limits</h3>
+            <h3 className="text-title-md text-on-surface">{t("Spending Limits")}</h3>
             <button
               onClick={() => setActiveSheet({ kind: "limits" })}
               className="text-label-md text-primary hover:underline"
             >
-              Set Limits
+              {t("Set Limits")}
             </button>
           </div>
 
           <div className="bg-surface-container-lowest rounded-xl shadow-card p-lg space-y-lg">
-            <LimitRow label="Daily" spent={todayExpense} limit={dailyLimit} currency={currency} />
-            <LimitRow label="This Month" spent={monthExpense} limit={monthlyLimit} currency={currency} />
+            <LimitRow label={t("Daily")} spent={todayExpense} limit={dailyLimit} currency={currency} />
+            <LimitRow label={t("This Month")} spent={monthExpense} limit={monthlyLimit} currency={currency} />
           </div>
         </section>
 
         {/* Recurring transactions */}
         <section className="space-y-md">
           <div className="flex justify-between items-center px-1">
-            <h3 className="text-title-md text-on-surface">Recurring</h3>
+            <h3 className="text-title-md text-on-surface">{t("Recurring")}</h3>
             <button
               onClick={() => setActiveSheet({ kind: "recurring", data: null })}
               className="text-label-md text-primary hover:underline"
             >
-              + Add
+              {t("+ Add")}
             </button>
           </div>
 
           {recurringRules.length === 0 && (
             <div className="text-center py-md text-on-surface-variant text-body-sm">
-              No recurring transactions yet — great for salary, rent or subscriptions.
+              {t("No recurring transactions yet — great for salary, rent or subscriptions.")}
             </div>
           )}
 
@@ -225,7 +227,7 @@ export default function Finance() {
         {/* Linked financial goals (reverse link) */}
         {linkedFinancialGoals.length > 0 && (
           <section className="space-y-sm">
-            <h3 className="text-title-md text-on-surface px-1">Linked Goals</h3>
+            <h3 className="text-title-md text-on-surface px-1">{t("Linked Goals")}</h3>
             <div className="flex flex-col gap-sm">
               {linkedFinancialGoals.map((goal) => {
                 const stats = getFinancialGoalStats(goal, transactions);
@@ -244,7 +246,7 @@ export default function Finance() {
                         {stats.current}/{stats.target} {currency}
                       </p>
                     </div>
-                    <span className="material-symbols-outlined text-on-surface-variant text-[18px] shrink-0">chevron_right</span>
+                    <span className="material-symbols-outlined text-on-surface-variant text-[18px] shrink-0 rtl-flip">chevron_right</span>
                   </button>
                 );
               })}
@@ -255,15 +257,15 @@ export default function Finance() {
         {/* Recent transactions */}
         <section className="space-y-md">
           <div className="flex justify-between items-center px-1">
-            <h3 className="text-title-md text-on-surface">Recent Transactions</h3>
+            <h3 className="text-title-md text-on-surface">{t("Recent Transactions")}</h3>
             <button onClick={() => navigate("/stats/finance")} className="text-label-md text-primary hover:underline">
-              View Stats
+              {t("View Stats")}
             </button>
           </div>
 
           {recentTransactions.length === 0 && (
             <div className="text-center py-lg text-on-surface-variant text-body-sm">
-              No transactions yet — tap + to log your first one.
+              {t("No transactions yet — tap + to log your first one.")}
             </div>
           )}
 
@@ -355,10 +357,11 @@ export default function Finance() {
 }
 
 function LimitRow({ label, spent, limit, currency }) {
+  const { t } = useLanguage();
   if (!limit) {
     return (
       <div className="flex items-center justify-between">
-        <span className="text-body-sm text-on-surface-variant">{label} limit not set</span>
+        <span className="text-body-sm text-on-surface-variant">{label} {t("limit not set")}</span>
       </div>
     );
   }
@@ -379,7 +382,7 @@ function LimitRow({ label, spent, limit, currency }) {
       <div className="w-full h-2 bg-surface-container-high rounded-full overflow-hidden">
         <div className={`h-full rounded-full ${colorClass}`} style={{ width: `${pct}%` }} />
       </div>
-      {over && <p className="text-label-md text-error">Over by {spent - limit} {currency}</p>}
+      {over && <p className="text-label-md text-error">{t("Over by")} {spent - limit} {currency}</p>}
     </div>
   );
 }

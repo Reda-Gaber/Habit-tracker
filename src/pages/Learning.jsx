@@ -6,6 +6,7 @@ import TopAppBar from "../components/TopAppBar";
 import BottomNav from "../components/BottomNav";
 import FAB from "../components/FAB";
 import LinkedGoalBadge from "../components/LinkedGoalBadge";
+import { useLanguage } from "../utils/language";
 import {
   AddLearningMenu,
   AddSubjectSheet,
@@ -17,6 +18,7 @@ import {
 export default function Learning() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useLanguage();
   const subjects = useLiveQuery(() => db.subjects.toArray(), []) || [];
   const [activeSubjectId, setActiveSubjectId] = useState(location.state?.subjectId ?? null);
   const [activeLevelId, setActiveLevelId] = useState(location.state?.levelId ?? null);
@@ -106,9 +108,9 @@ export default function Learning() {
   if (!activeSubject) {
     return (
       <div className="bg-background min-h-screen pb-24">
-        <TopAppBar title="Knowledge Hub" showProfile />
+        <TopAppBar title={t("Knowledge Hub")} showProfile />
         <main className="pt-24 px-container_margin_mobile text-center text-on-surface-variant">
-          No subjects yet. Tap + to add your first subject.
+          {t("No subjects yet. Tap + to add your first subject.")}
         </main>
         <FAB onClick={() => setActiveSheet("menu")} />
         {activeSheet && (
@@ -121,7 +123,7 @@ export default function Learning() {
 
   return (
     <div className="bg-background text-on-surface min-h-screen pb-32">
-      <TopAppBar title="Knowledge Hub" showProfile />
+      <TopAppBar title={t("Knowledge Hub")} showProfile />
 
       <main className="px-container_margin_mobile pt-20 max-w-2xl mx-auto py-lg flex flex-col gap-xl">
         {subjects.length > 1 && (
@@ -226,12 +228,12 @@ export default function Learning() {
 
         <section className="flex flex-col gap-md">
           <div className="flex justify-between items-end">
-            <h3 className="text-title-md text-on-surface">Curriculum</h3>
+            <h3 className="text-title-md text-on-surface">{t("Curriculum")}</h3>
           </div>
 
           {courses.length === 0 && (
             <div className="text-center py-lg text-on-surface-variant text-body-sm">
-              No courses in this level yet.
+              {t("No courses in this level yet.")}
             </div>
           )}
 
@@ -259,7 +261,7 @@ export default function Learning() {
                     <div className="h-full bg-primary rounded-full" style={{ width: `${pct}%` }} />
                   </div>
                 </div>
-                <span className="material-symbols-outlined text-on-surface-variant p-1">chevron_right</span>
+                <span className="material-symbols-outlined text-on-surface-variant p-1 rtl-flip">chevron_right</span>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();

@@ -25,7 +25,7 @@ export default function TopAppBar({
               className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-low transition-colors duration-200 -ml-2"
               aria-label="Back"
             >
-              <span className="material-symbols-outlined">arrow_back</span>
+              <span className="material-symbols-outlined rtl-flip">arrow_back</span>
             </button>
           )}
           {showProfile && (

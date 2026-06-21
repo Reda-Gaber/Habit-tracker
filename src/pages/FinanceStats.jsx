@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db, getSetting } from "../db/db";
 import BottomNav from "../components/BottomNav";
+import { useLanguage } from "../utils/language";
 
 function startOfMonth(d) {
   return new Date(d.getFullYear(), d.getMonth(), 1);
@@ -10,6 +11,7 @@ function startOfMonth(d) {
 
 export default function FinanceStats() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const transactions = useLiveQuery(() => db.transactions.toArray(), []) || [];
   const [currency, setCurrency] = useState("EGP");
 
@@ -88,44 +90,44 @@ export default function FinanceStats() {
           onClick={() => navigate(-1)}
           className="flex items-center gap-2 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200 p-2 -ml-2 rounded-full"
         >
-          <span className="material-symbols-outlined">arrow_back</span>
-          <span className="text-label-md">Back</span>
+          <span className="material-symbols-outlined rtl-flip">arrow_back</span>
+          <span className="text-label-md">{t("Back")}</span>
         </button>
-        <h1 className="text-title-md text-primary">Finance Stats</h1>
+        <h1 className="text-title-md text-primary">{t("Finance Stats")}</h1>
         <div className="w-10" />
       </header>
 
       <main className="max-w-2xl mx-auto px-container_margin_mobile pt-4 flex flex-col gap-lg">
         {/* All-time summary */}
         <section className="bg-primary-container rounded-xl p-lg text-on-primary-container">
-          <p className="text-label-md opacity-80 uppercase tracking-widest mb-1">All-Time Net</p>
+          <p className="text-label-md opacity-80 uppercase tracking-widest mb-1">{t("All-Time Net")}</p>
           <p className="text-display-lg mb-sm">
             {netAll >= 0 ? "+" : ""}
             {netAll} {currency}
           </p>
           <div className="flex items-center justify-between text-body-sm">
-            <span>Income: {totalIncome} {currency}</span>
-            <span>Expense: {totalExpense} {currency}</span>
+            <span>{t("Income")}: {totalIncome} {currency}</span>
+            <span>{t("Expense")}: {totalExpense} {currency}</span>
           </div>
         </section>
 
         {/* This month vs last month */}
         <section className="grid grid-cols-2 gap-md">
           <div className="bg-surface-container-lowest rounded-xl shadow-card p-lg border border-outline-variant">
-            <span className="text-label-md text-on-surface-variant">This Month Income</span>
+            <span className="text-label-md text-on-surface-variant">{t("This Month Income")}</span>
             <p className="text-headline-lg-mobile text-tertiary mt-1">
               {thisMonthIncome} {currency}
             </p>
           </div>
           <div className="bg-surface-container-lowest rounded-xl shadow-card p-lg border border-outline-variant">
-            <span className="text-label-md text-on-surface-variant">This Month Expense</span>
+            <span className="text-label-md text-on-surface-variant">{t("This Month Expense")}</span>
             <p className="text-headline-lg-mobile text-error mt-1">
               {thisMonthExpense} {currency}
             </p>
             {expenseChange && (
               <span className={`flex items-center gap-0.5 text-label-md mt-1 ${expenseChange.up ? "text-error" : "text-tertiary"}`}>
                 <span className="material-symbols-outlined text-[16px]">{expenseChange.up ? "trending_up" : "trending_down"}</span>
-                {Math.abs(expenseChange.pct)}% vs last month
+                {Math.abs(expenseChange.pct)}% {t("vs last month")}
               </span>
             )}
           </div>
@@ -134,21 +136,21 @@ export default function FinanceStats() {
         {/* Monthly trend */}
         <section className="bg-surface-container-lowest p-lg rounded-xl border border-outline-variant shadow-card">
           <div className="flex items-center justify-between mb-lg">
-            <h2 className="text-title-md text-on-surface">Monthly Trend · Last 6 Months</h2>
+            <h2 className="text-title-md text-on-surface">{t("Monthly Trend · Last 6 Months")}</h2>
             <div className="flex items-center gap-md text-label-md text-on-surface-variant">
               <span className="flex items-center gap-1">
                 <span className="w-2.5 h-2.5 rounded-full bg-tertiary inline-block" />
-                Income
+                {t("Income")}
               </span>
               <span className="flex items-center gap-1">
                 <span className="w-2.5 h-2.5 rounded-full bg-error inline-block" />
-                Expense
+                {t("Expense")}
               </span>
             </div>
           </div>
 
           {!hasMonthlyData && (
-            <p className="text-center text-on-surface-variant text-body-sm py-lg">No transactions logged yet.</p>
+            <p className="text-center text-on-surface-variant text-body-sm py-lg">{t("No transactions logged yet.")}</p>
           )}
 
           {hasMonthlyData && (
@@ -176,7 +178,7 @@ export default function FinanceStats() {
 
         {/* 7-day spending trend */}
         <section className="bg-surface-container-lowest p-lg rounded-xl border border-outline-variant shadow-card">
-          <h2 className="text-title-md text-on-surface mb-lg">Last 7 Days · Spending</h2>
+          <h2 className="text-title-md text-on-surface mb-lg">{t("Last 7 Days · Spending")}</h2>
           <div className="h-40 flex items-end justify-between gap-sm px-sm">
             {dailyExpense.map((amount, i) => (
               <div key={i} className="flex-1 flex flex-col items-center gap-sm">
@@ -189,10 +191,10 @@ export default function FinanceStats() {
 
         {/* Category breakdown */}
         <section className="space-y-md">
-          <h2 className="text-title-md text-on-surface">Spending by Category · This Month</h2>
+          <h2 className="text-title-md text-on-surface">{t("Spending by Category · This Month")}</h2>
 
           {categoryBreakdown.length === 0 && (
-            <div className="text-center py-lg text-on-surface-variant text-body-sm">No expenses logged this month yet.</div>
+            <div className="text-center py-lg text-on-surface-variant text-body-sm">{t("No expenses logged this month yet.")}</div>
           )}
 
           {categoryBreakdown.length > 0 && (

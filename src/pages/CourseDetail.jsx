@@ -4,6 +4,7 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "../db/db";
 import BottomNav from "../components/BottomNav";
 import LinkedGoalBadge from "../components/LinkedGoalBadge";
+import { useLanguage } from "../utils/language";
 
 const STATUS_STYLES = {
   completed: { icon: "check_circle", classes: "text-tertiary icon-filled" },
@@ -19,6 +20,7 @@ const STATUS_LABELS = {
 
 export default function CourseDetail() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const { id } = useParams();
   const courseId = Number(id);
 
@@ -83,8 +85,8 @@ export default function CourseDetail() {
           onClick={() => navigate(-1)}
           className="flex items-center gap-2 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200 p-2 -ml-2 rounded-full"
         >
-          <span className="material-symbols-outlined">arrow_back</span>
-          <span className="text-label-md">Back</span>
+          <span className="material-symbols-outlined rtl-flip">arrow_back</span>
+          <span className="text-label-md">{t("Back")}</span>
         </button>
         <button
           onClick={deleteCourse}
@@ -154,7 +156,7 @@ export default function CourseDetail() {
 
         {/* Lessons */}
         <section className="flex flex-col gap-md">
-          <h3 className="text-title-md text-on-surface">Lessons</h3>
+          <h3 className="text-title-md text-on-surface">{t("Lessons")}</h3>
 
           {lessons.length === 0 && (
             <div className="text-center py-lg text-on-surface-variant text-body-sm">

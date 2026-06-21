@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { db } from "../db/db";
+import { useLanguage } from "../utils/language";
 
 function highlight(text, query) {
   if (!query || !text) return text;
@@ -57,6 +58,7 @@ async function runSearch(q) {
 
 export default function GlobalSearch({ onClose }) {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const inputRef = useRef(null);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState(null);
@@ -69,12 +71,12 @@ export default function GlobalSearch({ onClose }) {
   useEffect(() => {
     if (!query.trim()) { setResults(null); return; }
     setLoading(true);
-    const t = setTimeout(async () => {
+    const timer = setTimeout(async () => {
       const r = await runSearch(query);
       setResults(r);
       setLoading(false);
     }, 200);
-    return () => clearTimeout(t);
+    return () => clearTimeout(timer);
   }, [query]);
 
   const go = (path) => { onClose(); navigate(path); };
@@ -95,7 +97,7 @@ export default function GlobalSearch({ onClose }) {
             ref={inputRef}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search tasks, goals, lessons..."
+            placeholder={t("Search tasks, goals, lessons...")}
             className="flex-1 text-body-lg text-on-surface bg-transparent outline-none placeholder:text-outline"
           />
           {query ? (
@@ -113,7 +115,7 @@ export default function GlobalSearch({ onClose }) {
         <div className="flex-1 overflow-y-auto px-container_margin_mobile py-md space-y-lg">
           {!query && (
             <p className="text-center text-on-surface-variant text-body-sm pt-xl">
-              Start typing to search across everything
+              {t("Start typing to search across everything")}
             </p>
           )}
 
@@ -125,29 +127,29 @@ export default function GlobalSearch({ onClose }) {
 
           {!loading && results && !hasResults && (
             <p className="text-center text-on-surface-variant text-body-sm pt-xl">
-              No results for "{query}"
+              {t("No results for")} "{query}"
             </p>
           )}
 
           {!loading && results?.tasks.length > 0 && (
             <section className="space-y-xs">
-              <p className="text-label-md text-on-surface-variant uppercase tracking-wider px-1">Tasks</p>
-              {results.tasks.map((t) => (
+              <p className="text-label-md text-on-surface-variant uppercase tracking-wider px-1">{t("Tasks")}</p>
+              {results.tasks.map((task) => (
                 <button
-                  key={t.id}
-                  onClick={() => go(`/tasks/${t.id}/edit`)}
+                  key={task.id}
+                  onClick={() => go(`/tasks/${task.id}/edit`)}
                   className="w-full flex items-center gap-md p-md rounded-xl bg-surface-container-lowest border border-surface-variant/30 text-left hover:border-primary transition-colors"
                 >
-                  <span className={`material-symbols-outlined shrink-0 ${t.completed ? "text-tertiary" : "text-on-surface-variant"}`}>
-                    {t.completed ? "task_alt" : "circle"}
+                  <span className={`material-symbols-outlined shrink-0 ${task.completed ? "text-tertiary" : "text-on-surface-variant"}`}>
+                    {task.completed ? "task_alt" : "circle"}
                   </span>
                   <div className="flex-1 min-w-0">
-                    <p className={`text-body-sm truncate ${t.completed ? "line-through text-on-surface-variant" : "text-on-surface"}`}>
-                      {highlight(t.title, query)}
+                    <p className={`text-body-sm truncate ${task.completed ? "line-through text-on-surface-variant" : "text-on-surface"}`}>
+                      {highlight(task.title, query)}
                     </p>
-                    {t.category && <p className="text-label-md text-on-surface-variant">{highlight(t.category, query)}</p>}
+                    {task.category && <p className="text-label-md text-on-surface-variant">{highlight(task.category, query)}</p>}
                   </div>
-                  <span className="material-symbols-outlined text-on-surface-variant text-[18px] shrink-0">chevron_right</span>
+                  <span className="material-symbols-outlined text-on-surface-variant text-[18px] shrink-0 rtl-flip">chevron_right</span>
                 </button>
               ))}
             </section>
@@ -155,7 +157,7 @@ export default function GlobalSearch({ onClose }) {
 
           {!loading && results?.goals.length > 0 && (
             <section className="space-y-xs">
-              <p className="text-label-md text-on-surface-variant uppercase tracking-wider px-1">Goals</p>
+              <p className="text-label-md text-on-surface-variant uppercase tracking-wider px-1">{t("Goals")}</p>
               {results.goals.map((g) => (
                 <button
                   key={g.id}
@@ -165,9 +167,9 @@ export default function GlobalSearch({ onClose }) {
                   <span className="material-symbols-outlined text-primary shrink-0 icon-filled">flag</span>
                   <div className="flex-1 min-w-0">
                     <p className="text-body-sm text-on-surface truncate">{highlight(g.title, query)}</p>
-                    <p className="text-label-md text-on-surface-variant">{g.progress ?? 0}% complete</p>
+                    <p className="text-label-md text-on-surface-variant">{g.progress ?? 0}% {t("complete")}</p>
                   </div>
-                  <span className="material-symbols-outlined text-on-surface-variant text-[18px] shrink-0">chevron_right</span>
+                  <span className="material-symbols-outlined text-on-surface-variant text-[18px] shrink-0 rtl-flip">chevron_right</span>
                 </button>
               ))}
             </section>
@@ -175,7 +177,7 @@ export default function GlobalSearch({ onClose }) {
 
           {!loading && (results?.courses.length > 0 || results?.lessons.length > 0) && (
             <section className="space-y-xs">
-              <p className="text-label-md text-on-surface-variant uppercase tracking-wider px-1">Learning</p>
+              <p className="text-label-md text-on-surface-variant uppercase tracking-wider px-1">{t("Learning")}</p>
               {results.courses.map((c) => (
                 <button
                   key={`course-${c.id}`}
@@ -187,7 +189,7 @@ export default function GlobalSearch({ onClose }) {
                     <p className="text-body-sm text-on-surface truncate">{highlight(c.name, query)}</p>
                     {c._subject && <p className="text-label-md text-on-surface-variant">{c._subject.name}</p>}
                   </div>
-                  <span className="material-symbols-outlined text-on-surface-variant text-[18px] shrink-0">chevron_right</span>
+                  <span className="material-symbols-outlined text-on-surface-variant text-[18px] shrink-0 rtl-flip">chevron_right</span>
                 </button>
               ))}
               {results.lessons.map((l) => (
@@ -207,7 +209,7 @@ export default function GlobalSearch({ onClose }) {
                       {[l._subject?.name, l._course?.name].filter(Boolean).join(" › ")}
                     </p>
                   </div>
-                  <span className="material-symbols-outlined text-on-surface-variant text-[18px] shrink-0">chevron_right</span>
+                  <span className="material-symbols-outlined text-on-surface-variant text-[18px] shrink-0 rtl-flip">chevron_right</span>
                 </button>
               ))}
             </section>
@@ -215,24 +217,24 @@ export default function GlobalSearch({ onClose }) {
 
           {!loading && results?.transactions.length > 0 && (
             <section className="space-y-xs">
-              <p className="text-label-md text-on-surface-variant uppercase tracking-wider px-1">Transactions</p>
-              {results.transactions.map((t) => (
+              <p className="text-label-md text-on-surface-variant uppercase tracking-wider px-1">{t("Transactions")}</p>
+              {results.transactions.map((tx) => (
                 <button
-                  key={t.id}
+                  key={tx.id}
                   onClick={() => go("/finance")}
                   className="w-full flex items-center gap-md p-md rounded-xl bg-surface-container-lowest border border-surface-variant/30 text-left hover:border-primary transition-colors"
                 >
-                  <span className={`material-symbols-outlined shrink-0 ${t.type === "income" ? "text-tertiary" : "text-error"}`}>
-                    {t.type === "income" ? "arrow_downward" : "arrow_upward"}
+                  <span className={`material-symbols-outlined shrink-0 ${tx.type === "income" ? "text-tertiary" : "text-error"}`}>
+                    {tx.type === "income" ? "arrow_downward" : "arrow_upward"}
                   </span>
                   <div className="flex-1 min-w-0">
                     <p className="text-body-sm text-on-surface truncate">
-                      {highlight(t.category, query)}{t.note ? ` · ${highlight(t.note, query)}` : ""}
+                      {highlight(tx.category, query)}{tx.note ? ` · ${highlight(tx.note, query)}` : ""}
                     </p>
-                    <p className="text-label-md text-on-surface-variant">{t.date}</p>
+                    <p className="text-label-md text-on-surface-variant">{tx.date}</p>
                   </div>
-                  <span className={`text-title-md shrink-0 ${t.type === "income" ? "text-tertiary" : "text-error"}`}>
-                    {t.type === "income" ? "+" : "-"}{t.amount}
+                  <span className={`text-title-md shrink-0 ${tx.type === "income" ? "text-tertiary" : "text-error"}`}>
+                    {tx.type === "income" ? "+" : "-"}{tx.amount}
                   </span>
                 </button>
               ))}

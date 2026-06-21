@@ -4,6 +4,7 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { db, getSetting } from "../db/db";
 import { getGoalProgress } from "../utils/goalProgress";
 import { computeTotalPoints, getLevelInfo } from "../utils/points";
+import { useLanguage } from "../utils/language";
 import TopAppBar from "../components/TopAppBar";
 import BottomNav from "../components/BottomNav";
 import FAB from "../components/FAB";
@@ -23,6 +24,7 @@ function startOfWeek(date) {
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [userName, setUserName] = useState("there");
   const [quickAddOpen, setQuickAddOpen] = useState(false);
 
@@ -191,9 +193,9 @@ export default function Dashboard() {
   const greeting = (() => {
     const h = today.getHours();
     const name = userName && userName !== "there" ? `, ${userName}` : "";
-    if (h < 12) return `Good Morning${name}`;
-    if (h < 18) return `Good Afternoon${name}`;
-    return `Good Evening${name}`;
+    if (h < 12) return `${t("Good Morning")}${name}`;
+    if (h < 18) return `${t("Good Afternoon")}${name}`;
+    return `${t("Good Evening")}${name}`;
   })();
 
   return (
@@ -226,15 +228,15 @@ export default function Dashboard() {
         <section className="grid grid-cols-3 gap-sm">
           <div onClick={() => navigate("/today")} className="bento-card p-md flex flex-col items-center gap-1 cursor-pointer">
             <span className="material-symbols-outlined text-primary icon-filled">today</span>
-            <span className="text-label-md text-on-surface-variant text-center">Today</span>
+            <span className="text-label-md text-on-surface-variant text-center">{t("Today")}</span>
           </div>
           <div onClick={() => navigate("/calendar")} className="bento-card p-md flex flex-col items-center gap-1 cursor-pointer">
             <span className="material-symbols-outlined text-secondary icon-filled">calendar_month</span>
-            <span className="text-label-md text-on-surface-variant text-center">Calendar</span>
+            <span className="text-label-md text-on-surface-variant text-center">{t("Calendar")}</span>
           </div>
           <div onClick={() => navigate("/journal")} className="bento-card p-md flex flex-col items-center gap-1 cursor-pointer">
             <span className="material-symbols-outlined text-tertiary icon-filled">auto_stories</span>
-            <span className="text-label-md text-on-surface-variant text-center">Journal</span>
+            <span className="text-label-md text-on-surface-variant text-center">{t("Journal")}</span>
           </div>
         </section>
 
@@ -245,7 +247,7 @@ export default function Dashboard() {
             className="bento-card relative p-lg flex flex-col justify-between h-40 bg-primary-container/5 border-primary-container/20 overflow-hidden cursor-pointer"
           >
             <div className="z-10">
-              <span className="text-label-md text-primary mb-1 block">Habit Progress</span>
+              <span className="text-label-md text-primary mb-1 block">{t("Habit Progress")}</span>
               <div className="text-headline-lg-mobile">{habitProgressPct}%</div>
             </div>
             <div className="w-full bg-primary-container/10 h-2 rounded-full overflow-hidden z-10">
@@ -261,12 +263,12 @@ export default function Dashboard() {
             className="bento-card p-lg flex flex-col justify-between h-40 bg-secondary-container/5 border-secondary-container/20 cursor-pointer"
           >
             <div>
-              <span className="text-label-md text-secondary mb-1 block">Tasks Remaining</span>
+              <span className="text-label-md text-secondary mb-1 block">{t("Tasks Remaining")}</span>
               <div className="text-headline-lg-mobile">{tasksRemaining}</div>
             </div>
             <div className="flex items-center gap-xs text-secondary">
-              <span className="material-symbols-outlined text-base">arrow_forward</span>
-              <span className="text-label-md">View all tasks</span>
+              <span className="material-symbols-outlined text-base rtl-flip">arrow_forward</span>
+              <span className="text-label-md">{t("View all tasks")}</span>
             </div>
           </div>
         </section>
@@ -277,7 +279,7 @@ export default function Dashboard() {
           className="bento-card relative p-lg flex items-center justify-between cursor-pointer bg-tertiary-container/5 border-tertiary-container/20 overflow-hidden"
         >
           <div className="z-10">
-            <span className="text-label-md text-tertiary mb-1 block">Today's Balance</span>
+            <span className="text-label-md text-tertiary mb-1 block">{t("Today's Balance")}</span>
             <div className="text-headline-lg-mobile">
               {todayNet >= 0 ? "+" : ""}
               {todayNet} {financeCurrency}
@@ -320,11 +322,11 @@ export default function Dashboard() {
         </section>
 
         <section className="space-y-md">
-          <h3 className="text-title-md text-on-surface">Weekly Overview</h3>
+          <h3 className="text-title-md text-on-surface">{t("Weekly Overview")}</h3>
           <div className="bento-card p-lg space-y-lg">
             <div className="flex justify-between items-center">
               <div>
-                <h4 className="text-body-lg font-semibold text-on-surface">Habit Consistency</h4>
+                <h4 className="text-body-lg font-semibold text-on-surface">{t("Habit Consistency")}</h4>
                 <p className="text-body-sm text-on-surface-variant">
                   {weeklyPct >= 70 ? "Excellent streak this week!" : weeklyPct >= 40 ? "Good progress so far" : "Let's build momentum"}
                 </p>
@@ -407,15 +409,15 @@ export default function Dashboard() {
         {/* Goals Progress */}
         <section className="space-y-md">
           <div className="flex justify-between items-center">
-            <h3 className="text-title-md text-on-surface">Goals Progress</h3>
+            <h3 className="text-title-md text-on-surface">{t("Goals Progress")}</h3>
             <button onClick={() => navigate("/goals")} className="text-label-md text-primary">
-              View all
+              {t("View all")}
             </button>
           </div>
           <div className="bento-card p-md space-y-md">
             {goals.length === 0 && (
               <p className="text-body-sm text-on-surface-variant text-center py-md">
-                No goals yet — add one to start planning ahead.
+                {t("No goals yet — add one to start planning ahead.")}
               </p>
             )}
             {goalsWithProgress.map((goal) => (
@@ -435,16 +437,16 @@ export default function Dashboard() {
         {/* Learning Progress Breakdown */}
         <section className="space-y-md">
           <div className="flex justify-between items-center">
-            <h3 className="text-title-md text-on-surface">Learning Progress</h3>
+            <h3 className="text-title-md text-on-surface">{t("Learning Progress")}</h3>
             <button onClick={() => navigate("/learning")} className="text-label-md text-primary">
-              Open
+              {t("Open")}
             </button>
           </div>
           <div className="space-y-md">
             {learningBreakdown.length === 0 && (
               <div className="bento-card p-md">
                 <p className="text-body-sm text-on-surface-variant text-center py-md">
-                  No subjects yet — add one from the Learning tab.
+                  {t("No subjects yet — add one from the Learning tab.")}
                 </p>
               </div>
             )}
@@ -493,7 +495,7 @@ export default function Dashboard() {
         </section>
 
         <section className="space-y-md">
-          <h3 className="text-title-md text-on-surface">Continue Learning</h3>
+          <h3 className="text-title-md text-on-surface">{t("Continue Learning")}</h3>
           <div
             onClick={() => navigate(inProgressLesson ? `/learning/lesson/${inProgressLesson.id}` : "/learning")}
             className="bento-card overflow-hidden cursor-pointer"
@@ -501,20 +503,20 @@ export default function Dashboard() {
             <div className="relative h-32 w-full bg-gradient-to-br from-primary to-primary-container flex items-end">
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
               <span className="absolute bottom-md left-lg text-title-md text-white">
-                {inProgressLesson ? inProgressLesson.name : "Start a new course"}
+                {inProgressLesson ? inProgressLesson.name : t("Start a new course")}
               </span>
             </div>
             <div className="p-lg flex justify-between items-center">
               <div>
                 <p className="text-body-sm text-on-surface-variant">
-                  {lessonCourse ? lessonCourse.name : "Explore your learning path"}
+                  {lessonCourse ? lessonCourse.name : t("Explore your learning path")}
                 </p>
                 <p className="text-label-md text-primary">
-                  {inProgressLesson ? "In progress" : "Tap to browse"}
+                  {inProgressLesson ? t("In progress") : t("Tap to browse")}
                 </p>
               </div>
               <button className="bg-primary text-on-primary rounded-full px-lg py-sm text-label-md">
-                {inProgressLesson ? "Resume" : "Explore"}
+                {inProgressLesson ? t("Resume") : t("Explore")}
               </button>
             </div>
           </div>
@@ -532,6 +534,7 @@ export default function Dashboard() {
 
 function QuickAddSheet({ onClose }) {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   return (
     <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/30" onClick={onClose}>
       <div
@@ -539,7 +542,7 @@ function QuickAddSheet({ onClose }) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="w-12 h-1.5 bg-surface-container-high rounded-full mx-auto mb-md" />
-        <h3 className="text-title-md text-on-surface mb-sm">Quick Add</h3>
+        <h3 className="text-title-md text-on-surface mb-sm">{t("Quick Add")}</h3>
         <button
           onClick={() => navigate("/habits/new")}
           className="w-full flex items-center gap-md p-md rounded-xl bg-surface-container-low active:scale-[0.98] transition-transform"
@@ -547,7 +550,7 @@ function QuickAddSheet({ onClose }) {
           <span className="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center text-primary">
             <span className="material-symbols-outlined">self_improvement</span>
           </span>
-          <span className="text-body-lg text-on-surface">New Habit</span>
+          <span className="text-body-lg text-on-surface">{t("New Habit")}</span>
         </button>
         <button
           onClick={() => navigate("/tasks/new")}
@@ -556,7 +559,7 @@ function QuickAddSheet({ onClose }) {
           <span className="w-10 h-10 rounded-full bg-secondary-fixed flex items-center justify-center text-secondary">
             <span className="material-symbols-outlined">task_alt</span>
           </span>
-          <span className="text-body-lg text-on-surface">New Task</span>
+          <span className="text-body-lg text-on-surface">{t("New Task")}</span>
         </button>
         <button
           onClick={() => navigate("/finance", { state: { openNew: true } })}
@@ -565,7 +568,7 @@ function QuickAddSheet({ onClose }) {
           <span className="w-10 h-10 rounded-full bg-tertiary-fixed flex items-center justify-center text-tertiary">
             <span className="material-symbols-outlined">payments</span>
           </span>
-          <span className="text-body-lg text-on-surface">New Transaction</span>
+          <span className="text-body-lg text-on-surface">{t("New Transaction")}</span>
         </button>
         <button
           onClick={() => navigate("/journal")}
@@ -574,7 +577,7 @@ function QuickAddSheet({ onClose }) {
           <span className="w-10 h-10 rounded-full bg-secondary-fixed flex items-center justify-center text-secondary">
             <span className="material-symbols-outlined">edit_note</span>
           </span>
-          <span className="text-body-lg text-on-surface">Journal Entry</span>
+          <span className="text-body-lg text-on-surface">{t("Journal Entry")}</span>
         </button>
       </div>
     </div>

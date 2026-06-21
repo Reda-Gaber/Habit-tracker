@@ -5,6 +5,7 @@ import { db } from "../db/db";
 import TopAppBar from "../components/TopAppBar";
 import BottomNav from "../components/BottomNav";
 import FAB from "../components/FAB";
+import { useLanguage } from "../utils/language";
 
 function todayStr() {
   return new Date().toISOString().split("T")[0];
@@ -48,6 +49,7 @@ const DAY_LABELS = ["S", "M", "T", "W", "T", "F", "S"];
 
 export default function Habits() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [filter, setFilter] = useState("all"); // all | daily | weekly
 
   const habits = useLiveQuery(() => db.habits.toArray(), []) || [];
@@ -78,7 +80,7 @@ export default function Habits() {
 
   return (
     <div className="bg-background text-on-background min-h-screen pb-24">
-      <TopAppBar title="Daily Rituals" showProfile />
+      <TopAppBar title={t("Daily Rituals")} showProfile />
 
       <main className="pt-20 px-container_margin_mobile max-w-2xl mx-auto">
         {/* Hero Summary */}
@@ -87,10 +89,10 @@ export default function Habits() {
             <div className="absolute top-0 right-0 p-4 opacity-10">
               <span className="material-symbols-outlined !text-9xl">auto_awesome</span>
             </div>
-            <p className="text-label-md opacity-80 mb-sm">CURRENT STREAK</p>
+            <p className="text-label-md opacity-80 mb-sm">{t("CURRENT STREAK")}</p>
             <div className="flex items-baseline gap-xs mb-md">
               <h2 className="text-display-lg">{maxStreak}</h2>
-              <span className="text-title-md">Days</span>
+              <span className="text-title-md">{t("Days")}</span>
             </div>
             <div className="flex items-center gap-sm">
               <div className="flex -space-x-2">
@@ -99,7 +101,7 @@ export default function Habits() {
                 <div className="w-8 h-8 rounded-full border-2 border-primary-container bg-secondary-fixed-dim" />
               </div>
               <p className="text-body-sm">
-                {maxStreak > 0 ? "Keep the momentum going!" : "Start your first streak today!"}
+                {maxStreak > 0 ? t("Keep the momentum going!") : t("Start your first streak today!")}
               </p>
             </div>
           </div>
@@ -116,7 +118,7 @@ export default function Habits() {
                   filter === f ? "bg-surface-container-lowest text-primary shadow-sm" : "text-on-surface-variant"
                 }`}
               >
-                {f}
+                {t(f)}
               </button>
             ))}
           </div>
@@ -126,7 +128,7 @@ export default function Habits() {
         <div className="space-y-md">
           {filteredHabits.length === 0 && (
             <div className="text-center py-xl text-on-surface-variant text-body-sm">
-              No habits yet. Tap + to add your first ritual.
+              {t("No habits yet. Tap + to add your first ritual.")}
             </div>
           )}
           {filteredHabits.map((habit) => {
